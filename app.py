@@ -795,7 +795,7 @@ def api_export_pdf(req: KundliRequest):
     pdf_filename = f"{safe_name}_{pkg_name}_{ts_str}_{safe_brand}.pdf"
     pdf_path = os.path.join(REPORTS_DIR, pdf_filename)
 
-    res = export_html_to_pdf(html_str, pdf_path, split_single_pages=(req.report_package == "maha"))
+    res = export_html_to_pdf(html_str, pdf_path, split_single_pages=False)
     if res.get("success"):
         # Auto-copy to user's Downloads folder for instant access
         try:
@@ -3487,12 +3487,14 @@ def index_ui():
 
   <!-- Filmora-Style Luxury Progress Modal with Live Countdown -->
   <div id="loadingModal">
-    <div class="modal-content-box">
+    <div class="modal-content-box" style="position:relative;">
+      <!-- Close button (✕) to prevent any stuck state -->
+      <button type="button" onclick="cancelExport()" style="position:absolute; top:12px; right:14px; background:rgba(255,255,255,0.12); border:1px solid rgba(254,240,138,0.3); color:#FEF08A; font-size:18px; font-weight:800; width:30px; height:30px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1; transition:all 0.2s;" title="रद्द करा / बंद करा (Cancel / Close)">✕</button>
       <div class="chakra-spinner">☸</div>
       <h3 style="color:#FEF08A; font-size:17px; font-weight:900; letter-spacing:1.5px; margin-bottom:6px;">COMPILING VEDIC HOROSCOPE</h3>
       <div id="loadingCountdownWrap" style="background:rgba(0,0,0,0.35); border:1.2px solid #D97706; border-radius:20px; padding:3px 14px; margin-bottom:10px; display:inline-flex; align-items:center; gap:8px;">
         <span style="font-size:14px;">⏱️</span>
-        <span style="color:#FEF08A; font-size:12px; font-weight:800;">अंदाजे वेळ शिल्लक: <span id="loadingCountdownSecs" style="font-size:15px; color:#38BDF8; font-weight:900;">15</span> सेकंद (Estimated Time: 15s)</span>
+        <span style="color:#FEF08A; font-size:12px; font-weight:800;">अंदाजे वेळ शिल्लक: <span id="loadingCountdownSecs" style="font-size:15px; color:#38BDF8; font-weight:900;">15</span> सेकंद</span>
       </div>
       <p id="loadingStageText" style="color:#FED7AA; font-size:12px; margin-bottom:14px; min-height:18px;">Initializing calculations...</p>
 
@@ -3500,9 +3502,14 @@ def index_ui():
         <div id="loadingBarFill" class="progress-bar-fill"></div>
       </div>
 
-      <div style="display:flex; justify-content:space-between; font-size:10.5px; color:#D6D3D1; font-weight:600;">
+      <div style="display:flex; justify-content:space-between; align-items:center; font-size:10.5px; color:#D6D3D1; font-weight:600;">
         <span id="loadingPercentText">10%</span>
         <span>High-Precision Vector Engine</span>
+      </div>
+      <div style="margin-top:14px; text-align:center;">
+        <button type="button" onclick="cancelExport()" style="background:transparent; border:1px solid rgba(254,240,138,0.35); color:#FDE68A; font-size:11.5px; font-weight:700; padding:5px 16px; border-radius:6px; cursor:pointer;">
+          ✕ प्रक्रिया रद्द करा (Cancel)
+        </button>
       </div>
     </div>
   </div>
@@ -5324,6 +5331,21 @@ def index_ui():
       }
     }
 
+    let _activeExportController = null;
+
+    function cancelExport() {
+      if (_activeExportController) {
+        try { _activeExportController.abort(); } catch(e){}
+        _activeExportController = null;
+      }
+      const modal = document.getElementById('loadingModal');
+      if (modal) {
+        modal.style.display = 'none';
+        modal.style.pointerEvents = 'none';
+      }
+      showNativeToast('प्रक्रिया थांबवली (Process cancelled)', 'info');
+    }
+
     async function exportPDF() {
       const p = getFormPayload();
       if (!p.name) {
@@ -5346,19 +5368,29 @@ def index_ui():
       txt.innerText = 'Calibrating VSOP87 Astronomical Coordinates & Lahiri Ayanamsha...';
       pct.innerText = '12%';
 
+      let elapsedSecs = 0;
       let remainingSecs = 15;
       if (countEl) countEl.innerText = remainingSecs;
+      
       const countTimer = setInterval(() => {
+        elapsedSecs++;
         remainingSecs--;
-        if (remainingSecs < 1) remainingSecs = 1;
-        if (countEl) countEl.innerText = remainingSecs;
+        if (remainingSecs > 1) {
+          if (countEl) countEl.innerText = remainingSecs;
+        } else {
+          // Instead of freezing at 1 second, show active status
+          if (countEl) countEl.innerText = 'अंतिम टप्पा';
+          txt.innerText = 'Rendering High-Resolution Vector PDF & Fonts (' + elapsedSecs + 's)...';
+          bar.style.width = '96%';
+          pct.innerText = '96%';
+        }
       }, 1000);
 
       const stages = [
         {w: '28%', t: 'Computing 16 Classical Shodashvarga Charts (D1 to D60)...', p: '28%'},
         {w: '48%', t: 'Calculating Vimshottari Dasha Periods & Lal Kitab Debts...', p: '48%'},
         {w: '68%', t: 'Evaluating Shadbala Strengths & 337-Point Ashtakavarga...', p: '68%'},
-        {w: '86%', t: 'Rendering 78-Page VIP Dossier with Authentic KP 12 CSL Remedies...', p: '86%'},
+        {w: '86%', t: 'Rendering VIP Dossier with Authentic KP 12 CSL Remedies...', p: '86%'},
         {w: '95%', t: 'Finalizing Complete Vector PDF & Royal Seals...', p: '95%'}
       ];
 
@@ -5370,22 +5402,48 @@ def index_ui():
           pct.innerText = stages[sIdx].p;
           sIdx++;
         }
-      }, 2500);
+      }, 2000);
+
+      _activeExportController = new AbortController();
 
       try {
         const res = await fetch('/api/export-pdf', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify(p)
+          body: JSON.stringify(p),
+          signal: _activeExportController.signal
         });
         clearInterval(timer);
         clearInterval(countTimer);
+        _activeExportController = null;
+
+        if (!res.ok) {
+          throw new Error('सर्व्हर रिस्पॉन्स त्रुटी (Server error): ' + res.status);
+        }
+
         const data = await res.json();
+        if (!data || data.success === false) {
+          throw new Error(data && data.message ? data.message : 'PDF तयार करताना त्रुटी आली');
+        }
+
+        // Handle Direct Print Mode (e.g. on Render cloud container without headless browser)
+        if (data.direct_print) {
+          bar.style.width = '100%';
+          pct.innerText = '100%';
+          if (countEl) countEl.innerText = '0';
+          txt.innerText = '✨ अहवाल तयार आहे! ब्राउझर प्रिंट उघडत आहे...';
+          setTimeout(() => {
+            modal.style.display = 'none';
+            modal.style.pointerEvents = 'none';
+            printReportFrame();
+          }, 400);
+          return;
+        }
 
         bar.style.width = '100%';
         pct.innerText = '100%';
         if (countEl) countEl.innerText = '0';
-        txt.innerText = '✨ 78-Page Kundli Dossier Ready!';
+        txt.innerText = '✨ Kundli Dossier Ready!';
 
         setTimeout(() => {
           // 1. Hide progress modal
@@ -5415,8 +5473,15 @@ def index_ui():
         }, 300);
       } catch (err) {
         clearInterval(timer);
-        modal.style.display = 'none'; modal.style.pointerEvents = 'none';
-        loadDashboard();
+        clearInterval(countTimer);
+        _activeExportController = null;
+        modal.style.display = 'none';
+        modal.style.pointerEvents = 'none';
+        if (err.name !== 'AbortError') {
+          console.error('PDF export error:', err);
+          showNativeToast('PDF त्रुटी: ' + (err.message || 'काहीतरी गडबड झाली'), 'error');
+        }
+        try { if (typeof loadDashboard === 'function') loadDashboard(); } catch(e){}
       }
     }
 
