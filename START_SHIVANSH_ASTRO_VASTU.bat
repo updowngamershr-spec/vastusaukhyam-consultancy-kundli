@@ -23,8 +23,22 @@ if exist "%~dp0ShivanshAstroVastu\ShivanshAstroVastu.exe" (
     exit
 )
 
+if exist "%~dp0dist\ShivanshAstroVastu\ShivanshAstroVastu.exe" (
+    cd /d "%~dp0dist\ShivanshAstroVastu"
+    start "" "%~dp0dist\ShivanshAstroVastu\ShivanshAstroVastu.exe"
+    exit
+)
+
 if exist "%~dp0ShivanshAstroVastu.exe" (
     start "" "%~dp0ShivanshAstroVastu.exe"
+    exit
+)
+
+:: 4. Direct Python fallback if Python is installed
+python --version >nul 2>&1
+if %errorlevel% equ 0 (
+    echo Launching with local Python environment...
+    start "" python desktop_main.py
     exit
 )
 
