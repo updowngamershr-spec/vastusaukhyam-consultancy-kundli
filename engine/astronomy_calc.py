@@ -11,6 +11,7 @@ try:
     HAS_SWISSEPH = True
     SWISSEPH_VERSION = getattr(swe, "__version__", "2.10.03")
 except ImportError:
+    swe = None
     HAS_SWISSEPH = False
     SWISSEPH_VERSION = "Unavailable"
 

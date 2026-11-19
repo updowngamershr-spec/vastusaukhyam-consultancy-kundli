@@ -13,6 +13,7 @@ try:
     import swisseph as swe
     HAS_SWISSEPH = True
 except ImportError:
+    swe = None
     HAS_SWISSEPH = False
 
 

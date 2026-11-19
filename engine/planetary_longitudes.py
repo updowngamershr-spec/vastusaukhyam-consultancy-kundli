@@ -13,6 +13,7 @@ try:
     import swisseph as swe
     HAS_SWISSEPH = True
 except ImportError:
+    swe = None
     HAS_SWISSEPH = False
 
 # Classical combust orbs from Sun (in degrees)
@@ -42,18 +43,18 @@ ZODIAC_SIGNS = [
 ]
 
 PLANET_INFO = [
-    {"id": "Sun", "name_en": "Sun", "name_hi": "सूर्य", "name_mr": "रवी", "short_mr": "रवि", "swe_id": getattr(swe, "SUN", 0), "astro_body": astronomy.Body.Sun},
-    {"id": "Moon", "name_en": "Moon", "name_hi": "चन्द्र", "name_mr": "चंद्र", "short_mr": "चं", "swe_id": getattr(swe, "MOON", 1), "astro_body": astronomy.Body.Moon},
-    {"id": "Mars", "name_en": "Mars", "name_hi": "मंगल", "name_mr": "मंगळ", "short_mr": "मं", "swe_id": getattr(swe, "MARS", 4), "astro_body": astronomy.Body.Mars},
-    {"id": "Mercury", "name_en": "Mercury", "name_hi": "बुध", "name_mr": "बुध", "short_mr": "बु", "swe_id": getattr(swe, "MERCURY", 2), "astro_body": astronomy.Body.Mercury},
-    {"id": "Jupiter", "name_en": "Jupiter", "name_hi": "गुरु", "name_mr": "गुरू", "short_mr": "गु", "swe_id": getattr(swe, "JUPITER", 5), "astro_body": astronomy.Body.Jupiter},
-    {"id": "Venus", "name_en": "Venus", "name_hi": "शुक्र", "name_mr": "शुक्र", "short_mr": "शु", "swe_id": getattr(swe, "VENUS", 3), "astro_body": astronomy.Body.Venus},
-    {"id": "Saturn", "name_en": "Saturn", "name_hi": "शनि", "name_mr": "शनी", "short_mr": "श", "swe_id": getattr(swe, "SATURN", 6), "astro_body": astronomy.Body.Saturn},
-    {"id": "Rahu", "name_en": "Rahu", "name_hi": "राहु", "name_mr": "राहू", "short_mr": "रा", "swe_id": getattr(swe, "MEAN_NODE", 10), "astro_body": None},
+    {"id": "Sun", "name_en": "Sun", "name_hi": "सूर्य", "name_mr": "रवी", "short_mr": "रवि", "swe_id": getattr(swe, "SUN", 0) if swe else 0, "astro_body": astronomy.Body.Sun},
+    {"id": "Moon", "name_en": "Moon", "name_hi": "चन्द्र", "name_mr": "चंद्र", "short_mr": "चं", "swe_id": getattr(swe, "MOON", 1) if swe else 1, "astro_body": astronomy.Body.Moon},
+    {"id": "Mars", "name_en": "Mars", "name_hi": "मंगल", "name_mr": "मंगळ", "short_mr": "मं", "swe_id": getattr(swe, "MARS", 4) if swe else 4, "astro_body": astronomy.Body.Mars},
+    {"id": "Mercury", "name_en": "Mercury", "name_hi": "बुध", "name_mr": "बुध", "short_mr": "बु", "swe_id": getattr(swe, "MERCURY", 2) if swe else 2, "astro_body": astronomy.Body.Mercury},
+    {"id": "Jupiter", "name_en": "Jupiter", "name_hi": "गुरु", "name_mr": "गुरू", "short_mr": "गु", "swe_id": getattr(swe, "JUPITER", 5) if swe else 5, "astro_body": astronomy.Body.Jupiter},
+    {"id": "Venus", "name_en": "Venus", "name_hi": "शुक्र", "name_mr": "शुक्र", "short_mr": "शु", "swe_id": getattr(swe, "VENUS", 3) if swe else 3, "astro_body": astronomy.Body.Venus},
+    {"id": "Saturn", "name_en": "Saturn", "name_hi": "शनि", "name_mr": "शनी", "short_mr": "श", "swe_id": getattr(swe, "SATURN", 6) if swe else 6, "astro_body": astronomy.Body.Saturn},
+    {"id": "Rahu", "name_en": "Rahu", "name_hi": "राहु", "name_mr": "राहू", "short_mr": "रा", "swe_id": getattr(swe, "MEAN_NODE", 10) if swe else 10, "astro_body": None},
     {"id": "Ketu", "name_en": "Ketu", "name_hi": "केतु", "name_mr": "केतू", "short_mr": "के", "swe_id": None, "astro_body": None},
-    {"id": "Uranus", "name_en": "Uranus", "name_hi": "हर्षल", "name_mr": "हर्षल", "short_mr": "ह", "swe_id": getattr(swe, "URANUS", 7), "astro_body": astronomy.Body.Uranus},
-    {"id": "Neptune", "name_en": "Neptune", "name_hi": "नेपच्यून", "name_mr": "नेपच्यून", "short_mr": "ने", "swe_id": getattr(swe, "NEPTUNE", 8), "astro_body": astronomy.Body.Neptune},
-    {"id": "Pluto", "name_en": "Pluto", "name_hi": "प्लूटो", "name_mr": "प्लूटो", "short_mr": "प्लूं", "swe_id": getattr(swe, "PLUTO", 9), "astro_body": astronomy.Body.Pluto},
+    {"id": "Uranus", "name_en": "Uranus", "name_hi": "हर्षल", "name_mr": "हर्षल", "short_mr": "ह", "swe_id": getattr(swe, "URANUS", 7) if swe else 7, "astro_body": astronomy.Body.Uranus},
+    {"id": "Neptune", "name_en": "Neptune", "name_hi": "नेपच्यून", "name_mr": "नेपच्यून", "short_mr": "ने", "swe_id": getattr(swe, "NEPTUNE", 8) if swe else 8, "astro_body": astronomy.Body.Neptune},
+    {"id": "Pluto", "name_en": "Pluto", "name_hi": "प्लूटो", "name_mr": "प्लूटो", "short_mr": "प्लूं", "swe_id": getattr(swe, "PLUTO", 9) if swe else 9, "astro_body": astronomy.Body.Pluto},
 ]
 
 
