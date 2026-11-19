@@ -257,7 +257,7 @@ RASHI_GUIDE_DATA = {
 
 from engine.marathi_engine import to_marathi, RASHI_NAMES_MR, GRAHA_NAMES_MR, to_marathi_with_hindi
 
-def build_full_56_page_html(data: dict, lang: str = "mr", package: str = "maha") -> str:
+def build_full_56_page_html(data: dict, lang: str = "mr", package: str = "maha", selected_pages: list | None = None) -> str:
     """
     Build the complete 56-page Gurukulam Kundli HTML report.
     `lang`: 'gu' (Gujarati), 'en' (English), 'both' (Bilingual Gujarati+English), or 'hi' (Hindi).
@@ -2656,8 +2656,19 @@ def build_full_56_page_html(data: dict, lang: str = "mr", package: str = "maha")
     .hi-sub { color: #9A3412; font-size: 0.92em; font-weight: 600; }
     """
 
-    # Modular report package filtering
-    if package == "laghu":
+    # Modular report package or custom page filtering
+    if selected_pages and len(selected_pages) > 0:
+        clean_sel = []
+        for sp in selected_pages:
+            try:
+                num = int(sp)
+                if 1 <= num <= len(pages) and num not in clean_sel:
+                    clean_sel.append(num)
+            except (ValueError, TypeError):
+                continue
+        if clean_sel:
+            pages = [pages[i - 1] for i in clean_sel]
+    elif package == "laghu":
         # 4 Core Pages: Cover, Avkahada & Favourable, Lagna/Navamsha/Dasha overview, Planetary Positions & Chalit
         pages = pages[:4]
     elif package == "varshaphal":

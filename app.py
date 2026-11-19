@@ -14,6 +14,7 @@ Features:
 """
 
 import os
+import re
 import sys
 import io
 import zipfile
@@ -91,6 +92,7 @@ class KundliRequest(BaseModel):
     lang: str = "mr"
     chart_style: str = "north"
     report_package: str = "maha"
+    selected_pages: list[int] | None = None
 
 
 class BrandingRequest(BaseModel):
@@ -716,7 +718,7 @@ def api_generate_html(req: KundliRequest):
             data["brand"]["phone"] = brand_cfg["phone"]
         if brand_cfg.get("tagline"):
             data["brand"]["tagline_en"] = brand_cfg["tagline"]
-    html_str = build_full_56_page_html(data, lang=req.lang, package=req.report_package)
+    html_str = build_full_56_page_html(data, lang=req.lang, package=req.report_package, selected_pages=req.selected_pages)
     return HTMLResponse(content=html_str)
 
 
@@ -784,7 +786,7 @@ def api_export_pdf(req: KundliRequest):
             data["brand"]["phone"] = brand_cfg["phone"]
         if brand_cfg.get("tagline"):
             data["brand"]["tagline_en"] = brand_cfg["tagline"]
-    html_str = build_full_56_page_html(data, lang=req.lang, package=req.report_package)
+    html_str = build_full_56_page_html(data, lang=req.lang, package=req.report_package, selected_pages=req.selected_pages)
     safe_name = make_safe_filename(req.name)
     pkg_name = (req.report_package or "VIP").upper()
     ts_str = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -3205,74 +3207,106 @@ def index_ui():
         </section>
 
         <!-- =============================================================== -->
-        <!-- VIEW 6: PDF REPORT STUDIO -->
+        <!-- VIEW 6: PDF REPORT STUDIO & CUSTOM PAGE SELECTION -->
         <!-- =============================================================== -->
         <section class="view-pane" id="pane_reports">
-          <div class="glass-card" style="padding: 14px;">
+          <div class="glass-card" style="padding: 16px;">
             <!-- Top Action Header -->
-            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:12px; padding-bottom:10px; border-bottom:1.5px solid #EADBC8;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:14px; padding-bottom:12px; border-bottom:2px solid #EADBC8;">
               <div>
-                <h3 style="font-family:'Cinzel', serif; font-size:15.5px; font-weight:900; color:#7C2D12; margin:0 0 2px 0;">
-                  📄 ७८-पृष्ठीय VIP महा-जन्मपत्रिका पूर्वदृश्य (मराठी आवृत्ती)
-                </h3>
-                <span class="badge" id="reportNativeBadge" style="font-size:11px; background:#FEF3C7; color:#78350F; padding:2px 8px; border-radius:12px; font-weight:700;">Active Native: नवीन जातक (New Client)</span>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <h3 style="font-family:'Cinzel', serif; font-size:16.5px; font-weight:900; color:#7C2D12; margin:0;">
+                    📄 सविस्तर पृष्ठ निवड व कस्टमाईज अहवाल स्टुडिओ
+                  </h3>
+                  <span style="font-size:10.5px; background:linear-gradient(135deg, #7C2D12, #9A3412); color:#FEF3C7; padding:2px 8px; border-radius:10px; font-weight:800;">७८ पृष्ठे मास्टर</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px; margin-top:4px; flex-wrap:wrap;">
+                  <span class="badge" id="reportNativeBadge" style="font-size:11px; background:#FEF3C7; color:#78350F; padding:2px 8px; border-radius:12px; font-weight:700;">Active Native: नवीन जातक (New Client)</span>
+                  <span style="font-size:11px; color:#574032; font-weight:600;">(आपल्या आवश्यकतेनुसार हवे तेच विषय व पृष्ठे निवडून अचूक PDF तयार करा)</span>
+                </div>
               </div>
               <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-                <button class="btn-primary-gradient" style="background:linear-gradient(135deg, #059669 0%, #047857 100%); padding:9px 18px; font-size:13px; font-weight:800; display:inline-flex; align-items:center; gap:6px; box-shadow:0 4px 14px rgba(5,150,105,0.35);" onclick="printReportFrame()">
-                  🖨️ प्रिंट / PDF सेव्ह करा (Print / Save)
+                <button class="btn-primary-gradient" style="background:linear-gradient(135deg, #059669 0%, #047857 100%); padding:9px 18px; font-size:13px; font-weight:800; display:inline-flex; align-items:center; gap:6px; box-shadow:0 4px 14px rgba(5,150,105,0.35); border-radius:8px; color:#FFFFFF; cursor:pointer;" onclick="printReportFrame()">
+                  🖨️ निवडलेली पृष्ठे प्रिंट / सेव्ह करा (Print / Save)
                 </button>
-                <button class="btn-secondary-outline" onclick="openReportInNewTab()" style="padding:8px 12px; font-size:12px; font-weight:700; display:inline-flex; align-items:center; gap:4px;">
-                  📱 नवीन टॅबमध्ये उघडा (Fullscreen Tab)
+                <button class="btn-primary-gradient" style="background:linear-gradient(135deg, #7C2D12 0%, #9A3412 100%); padding:9px 16px; font-size:13px; font-weight:800; display:inline-flex; align-items:center; gap:6px; box-shadow:0 4px 14px rgba(124,45,18,0.25); border-radius:8px; color:#FFFBEB; cursor:pointer;" onclick="downloadCustomPdf()">
+                  📥 निवडलेली PDF डाऊनलोड (Download PDF)
                 </button>
-                <button class="btn-secondary-outline" onclick="loadInAppPdfPreview()" style="padding:8px 12px; font-size:12px; font-weight:700;">
-                  🔄 रिफ्रेश करा (Refresh)
+                <button class="btn-secondary-outline" onclick="openReportInNewTab()" style="padding:8px 12px; font-size:12px; font-weight:700; display:inline-flex; align-items:center; gap:4px; border:1.5px solid #D97706; border-radius:8px; background:#FFFDF9; color:#7C2D12; cursor:pointer;">
+                  📱 नवीन टॅब (Fullscreen)
                 </button>
+                <button class="btn-secondary-outline" onclick="loadInAppPdfPreview()" style="padding:8px 12px; font-size:12px; font-weight:700; border:1.5px solid #D4AF37; border-radius:8px; background:#FFFDF9; color:#78350F; cursor:pointer;">
+                  🔄 रिफ्रेश (Refresh)
+                </button>
+              </div>
+            </div>
+
+            <!-- CUSTOM PAGE SELECTION & CHAPTER CONTROL ACCORDION (MAIN USER FEATURE) -->
+            <div style="background:#FFFDF9; border:1.5px solid #EADBC8; border-radius:12px; padding:14px; margin-bottom:14px; box-shadow:0 4px 16px rgba(124,45,18,0.06);">
+              <!-- Header with Expand/Collapse and Selection Summary -->
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span style="font-size:16px;">📑</span>
+                  <strong style="font-size:14px; font-weight:900; color:#7C2D12;">कस्टमाईज पृष्ठ व विषय निवड (Select Custom Pages & Chapters):</strong>
+                  <span id="selectedPagesCount" style="background:#7C2D12; color:#FEF3C7; font-weight:800; padding:3px 10px; border-radius:14px; font-size:12px;">७८ / ७८ पृष्ठे निवडली</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                  <label style="display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:700; color:#7C2D12; cursor:pointer; background:#FEF3C7; padding:4px 10px; border-radius:8px; border:1px solid #F59E0B;">
+                    <input type="checkbox" id="cbAutoCoverBack" checked onchange="onPageSelectionChanged(true)" style="accent-color:#7C2D12; cursor:pointer;"/>
+                    <span>नेहमी मुखपृष्ठ (P.1) व अंतिम पृष्ठ (P.78) जोडा</span>
+                  </label>
+                  <button type="button" class="btn-secondary-outline" onclick="toggleCustomSelectorExpand()" id="btnToggleSelector" style="padding:4px 10px; font-size:11.5px; font-weight:700; border-radius:6px; border:1px solid #EADBC8; cursor:pointer;">
+                    ▲ पॅनल लपवा / दाखवा
+                  </button>
+                </div>
+              </div>
+
+              <!-- Quick Action Buttons & Presets -->
+              <div id="customSelectorContent">
+                <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; padding:8px 10px; background:#FDF8F3; border-radius:8px; border:1px solid #F3E8DC; margin-bottom:12px;">
+                  <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+                    <button type="button" onclick="selectAllReportPages()" style="padding:5px 12px; font-size:11.5px; font-weight:800; background:#047857; color:#FFFFFF; border:none; border-radius:6px; cursor:pointer;">
+                      ✓ सर्व ७८ पृष्ठे निवडा (Select All)
+                    </button>
+                    <button type="button" onclick="deselectAllReportPages()" style="padding:5px 12px; font-size:11.5px; font-weight:800; background:#991B1B; color:#FFFFFF; border:none; border-radius:6px; cursor:pointer;">
+                      ✕ सर्व अनचेक करा (Clear All)
+                    </button>
+                  </div>
+                  <div style="display:flex; gap:4px; flex-wrap:wrap; align-items:center;">
+                    <span style="font-size:11px; font-weight:700; color:#78350F; margin-right:4px;">🎯 झटपट पॅकेज:</span>
+                    <button type="button" onclick="applyPagePreset('all')" style="padding:4px 8px; font-size:11px; font-weight:700; background:#FFFBEB; border:1px solid #D97706; border-radius:6px; color:#7C2D12; cursor:pointer;">👑 संपूर्ण महा-पत्रिका</button>
+                    <button type="button" onclick="applyPagePreset('sec_2')" style="padding:4px 8px; font-size:11px; font-weight:700; background:#FFFBEB; border:1px solid #D97706; border-radius:6px; color:#7C2D12; cursor:pointer;">✨ वि. २ लग्न व नक्षत्र</button>
+                    <button type="button" onclick="applyPagePreset('sec_3')" style="padding:4px 8px; font-size:11px; font-weight:700; background:#FFFBEB; border:1px solid #D97706; border-radius:6px; color:#7C2D12; cursor:pointer;">🪐 वि. ३ साडेसाती व दोष</button>
+                    <button type="button" onclick="applyPagePreset('sec_4')" style="padding:4px 8px; font-size:11px; font-weight:700; background:#FFFBEB; border:1px solid #D97706; border-radius:6px; color:#7C2D12; cursor:pointer;">🔮 वि. ४ दशा व गोचर</button>
+                    <button type="button" onclick="applyPagePreset('sec_5')" style="padding:4px 8px; font-size:11px; font-weight:700; background:#FFFBEB; border:1px solid #D97706; border-radius:6px; color:#7C2D12; cursor:pointer;">📕 वि. ५ लाल किताब</button>
+                    <button type="button" onclick="applyPagePreset('sec_8')" style="padding:4px 8px; font-size:11px; font-weight:700; background:#FFFBEB; border:1px solid #D97706; border-radius:6px; color:#7C2D12; cursor:pointer;">🔬 वि. ८ के.पी. उपाय</button>
+                    <button type="button" onclick="applyPagePreset('laghu')" style="padding:4px 8px; font-size:11px; font-weight:700; background:#FFFBEB; border:1px solid #D97706; border-radius:6px; color:#7C2D12; cursor:pointer;">📜 ४-पृष्ठे लघु</button>
+                  </div>
+                </div>
+
+                <div style="font-size:11.5px; color:#574032; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+                  <div><span style="font-weight:700; color:#7C2D12;">निवडलेले तपशील:</span> <span id="selectedPagesSummaryText" style="font-weight:600; color:#78350F;">(सर्व पृष्ठे १ ते ७८ समाविष्ट)</span></div>
+                  <button type="button" onclick="loadInAppPdfPreview()" style="padding:4px 12px; font-size:11.5px; font-weight:800; background:#D97706; color:#FFFFFF; border:none; border-radius:6px; cursor:pointer;">
+                    👁️ पूर्वदृश्य अपडेट करा (Update Preview)
+                  </button>
+                </div>
+
+                <!-- Sectional Grid (2 Columns: Left 1-4, Right 5-8) -->
+                <div id="reportSectionsContainer" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(400px, 1fr)); gap:12px;">
+                  <!-- Dynamically generated via JavaScript -->
+                </div>
               </div>
             </div>
 
             <!-- DIRECT FULL PDF PREVIEW CONTAINER -->
             <div style="width:100%; border-radius:12px; overflow:hidden; box-shadow:0 6px 24px rgba(124,45,18,0.12); margin-bottom:14px; background:#F5EFEB;">
-              <iframe id="reportFrame" title="Shivansh Astro-Vastu Full Report Preview" style="width:100%; height:75vh; min-height:540px; border:1.5px solid #D4AF37; border-radius:12px; background:#FFFFFF; display:block;"></iframe>
+              <iframe id="reportFrame" title="Shivansh Astro-Vastu Full Report Preview" style="width:100%; height:78vh; min-height:560px; border:1.5px solid #D4AF37; border-radius:12px; background:#FFFFFF; display:block;"></iframe>
             </div>
 
-            <!-- Collapsible Dossier & Chapter Settings -->
-            <details style="background:#FFFDF9; border:1.5px solid #EADBC8; border-radius:10px; padding:12px 14px; margin-top:8px;">
-              <summary style="font-size:12.5px; font-weight:800; color:#7C2D12; cursor:pointer; list-style:none; display:flex; justify-content:space-between; align-items:center;">
-                <span>⚙️ कुंडली पॅकेज व अध्यायांची यादी (अध्यायों की सूची)</span>
-                <span style="font-size:11px; color:#A8A29E;">▼ Click to expand options</span>
-              </summary>
-              <div style="margin-top:12px;">
-                <h4 style="font-size:12.5px; font-weight:800; color:#7C2D12; margin-bottom:8px;">Select Dossier Package</h4>
-                <div class="form-group" style="margin-bottom:12px;">
-                  <select id="reportPackageSelect" style="width:100%; height:40px; font-size:12.5px; font-weight:700; color:#7C2D12;" onchange="loadInAppPdfPreview()">
-                    <option value="maha">👑 संपूर्ण ८२-पृष्ठीय VIP महा-जन्मपत्रिका (82-Page Master Dossier)</option>
-                    <option value="kp_remedies">🔮 के.पी. अचूक उपाय विशेषांक (KP Remedies Special Report - 7 Pages)</option>
-                    <option value="laghu">📜 ४-पृष्ठीय लघु कुंडली सारांश (4-Page Summary)</option>
-                    <option value="varshaphal">🪐 १०-पृष्ठीय वार्षिक वर्षफळ व लाल किताब (10-Page Varshaphal)</option>
-                  </select>
-                </div>
-
-                <h4 style="font-size:12px; font-weight:800; color:#7C2D12; margin:10px 0 6px 0;">Included Chapters Checklist</h4>
-                <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:6px; font-size:11px; color:#2E1C10; font-weight:600;">
-                  <label><input type="checkbox" checked disabled/> Cover Page &amp; Credentials</label>
-                  <label><input type="checkbox" checked disabled/> Panchang &amp; Avakahada Coordinates</label>
-                  <label><input type="checkbox" checked disabled/> High-Res Vector D1 &amp; D9 Charts</label>
-                  <label><input type="checkbox" checked disabled/> 16 Shodashvarga Charts (D1 to D60)</label>
-                  <label><input type="checkbox" checked disabled/> 12 Bhavas Comprehensive Predictions</label>
-                  <label><input type="checkbox" checked disabled/> Vimshottari Mahadasha Timelines</label>
-                  <label><input type="checkbox" checked disabled/> Classical Doshas (Mangal, Kaal Sarp)</label>
-                  <label><input type="checkbox" checked disabled/> Lal Kitab Remedial Measures 1952</label>
-                  <label><input type="checkbox" checked disabled/> Shadbala &amp; Ashtakavarga Matrix</label>
-                  <label><input type="checkbox" checked disabled/> KP House Cusps &amp; Horary Significators</label>
-                </div>
-
-                <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
-                  <button class="btn-secondary-outline" id="btnSingleZip" style="display:none;" onclick="downloadSinglePagesZip()">
-                    📦 Download Single Pages ZIP (WhatsApp)
-                  </button>
-                </div>
-              </div>
-            </details>
+            <!-- Package fallback (hidden or sync) -->
+            <select id="reportPackageSelect" style="display:none;">
+              <option value="maha" selected>Maha</option>
+            </select>
           </div>
         </section>
 
@@ -4032,7 +4066,8 @@ def index_ui():
         notes: getVal('notes', '').trim(),
         varsha_year: parseInt(getVal('varsha_year', '2026')) || 2026,
         lang: currentLang,
-        report_package: getVal('reportPackageSelect', 'maha')
+        report_package: getVal('reportPackageSelect', 'maha'),
+        selected_pages: (typeof getSelectedReportPages === 'function') ? getSelectedReportPages() : null
       };
     }
 
@@ -4912,8 +4947,290 @@ def index_ui():
       }
     }
 
+    // ===============================================================
+    // 📑 CUSTOM REPORT PAGES & CHAPTERS DATA (78 PAGES FULL INDEX)
+    // ===============================================================
+    const REPORT_SECTIONS_DATA = [
+      {
+        id: 'sec_1',
+        title: 'विभाग १: मूळ कुंडली व पंचांग विज्ञान',
+        range: 'Pages 1–5',
+        topics: [
+          { id: 'p_1', title: 'जातक परिचय व मुख्य मुखपृष्ठ', pageStr: 'Page 1', pages: [1] },
+          { id: 'p_2', title: 'विस्तृत अनुक्रमणिका व विषय सूची', pageStr: 'Page 2', pages: [2] },
+          { id: 'p_3', title: 'पंचांग, अवकहडा चक्र व पाया', pageStr: 'Page 3', pages: [3] },
+          { id: 'p_4', title: 'पारंपरिक जन्म कुंडली, नवांश व दशा', pageStr: 'Page 4', pages: [4] },
+          { id: 'p_5', title: 'ग्रह स्पष्ट, दृष्टी व भाव चलित चक्र', pageStr: 'Page 5', pages: [5] }
+        ]
+      },
+      {
+        id: 'sec_2',
+        title: 'विभाग २: लग्न, नक्षत्र व सविस्तर जीवन फलादेश',
+        range: 'Pages 6–11',
+        topics: [
+          { id: 'p_6', title: 'आपले जन्म लग्न फळ (आरोग्य व स्वभाव)', pageStr: 'Page 6', pages: [6] },
+          { id: 'p_7', title: 'नक्षत्र फलादेश (शिक्षण, धन व कुटुंब)', pageStr: 'Page 7', pages: [7] },
+          { id: 'p_8_11', title: '१२ भाव सविस्तर व्यक्तिगत जीवन फलादेश', pageStr: 'Pages 8–11', pages: [8, 9, 10, 11] }
+        ]
+      },
+      {
+        id: 'sec_3',
+        title: 'विभाग ३: ग्रहदोष, महादशा व वर्षफळ',
+        range: 'Pages 12–20',
+        topics: [
+          { id: 'p_12', title: 'मांगलिक दोष विचार, प्रभाव व उपाय', pageStr: 'Page 12', pages: [12] },
+          { id: 'p_13_16', title: 'शनी साडेसाती व ढैया (तिन्ही चरणांचे फळ)', pageStr: 'Pages 13–16', pages: [13, 14, 15, 16] },
+          { id: 'p_17', title: 'कालसर्प योग विचार व शांती विधान', pageStr: 'Page 17', pages: [17] },
+          { id: 'p_18_20', title: 'ताजिक वर्षफळ, वर्ष कुंडली व मुद्धा दशा', pageStr: 'Pages 18–20', pages: [18, 19, 20] }
+        ]
+      },
+      {
+        id: 'sec_4',
+        title: 'विभाग ४: दशा चक्र, जैमिनी व गोचर',
+        range: 'Pages 21–30',
+        topics: [
+          { id: 'p_21_22', title: 'विंशोत्तरी महादशा फलादेश (९ ग्रह)', pageStr: 'Pages 21–22', pages: [21, 22] },
+          { id: 'p_23_24', title: 'योगिनी दशा संपूर्ण कोष्टक व उप-दशा', pageStr: 'Pages 23–24', pages: [23, 24] },
+          { id: 'p_25_27', title: 'जैमिनी पद्धती (कारकांश, स्वांश व चर दशा)', pageStr: 'Pages 25–27', pages: [25, 26, 27] },
+          { id: 'p_28_30', title: 'वर्तमान गोचर फल (९ ग्रहांचे प्रत्यक्ष भ्रमण)', pageStr: 'Pages 28–30', pages: [28, 29, 30] }
+        ]
+      },
+      {
+        id: 'sec_5',
+        title: 'विभाग ५: लाल किताब १९५२ व नवग्रह विचार',
+        range: 'Pages 31–41',
+        topics: [
+          { id: 'p_31_35', title: 'लाल किताब फलादेश व सात्विक तोडगे', pageStr: 'Pages 31–35', pages: [31, 32, 33, 34, 35] },
+          { id: 'p_36', title: 'लाल किताब गणित, तेवा व ३५-वर्षीय दशा', pageStr: 'Page 36', pages: [36] },
+          { id: 'p_37_41', title: 'नवग्रह फलादेश व विशेष सूत्र विचार', pageStr: 'Pages 37–41', pages: [37, 38, 39, 40, 41] }
+        ]
+      },
+      {
+        id: 'sec_6',
+        title: 'विभाग ६: षोडशवर्ग, प्रत्यंतर व बल गणना',
+        range: 'Pages 42–57',
+        topics: [
+          { id: 'p_42_45', title: 'षोडशवर्ग राशी, भाव व १६ कुंडल्या', pageStr: 'Pages 42–45', pages: [42, 43, 44, 45] },
+          { id: 'p_46', title: 'कृष्णमूर्ती पद्धती (के.पी. भाव आरंभ व उपस्वामी)', pageStr: 'Page 46', pages: [46] },
+          { id: 'p_47_50', title: 'विंशोत्तरी सूक्ष्म प्रत्यंतर दशा कोष्टक', pageStr: 'Pages 47–50', pages: [47, 48, 49, 50] },
+          { id: 'p_51_52', title: 'ग्रह मैत्री, षड्बल व भावबल गणना', pageStr: 'Pages 51–52', pages: [51, 52] },
+          { id: 'p_53_55', title: 'पाश्चात्य दृष्टी व के.पी. भाव संधी दृष्टी', pageStr: 'Pages 53–55', pages: [53, 54, 55] },
+          { id: 'p_56_57', title: 'अष्टकवर्ग (३३७ बिंदू) व प्रस्ताराष्टकवर्ग', pageStr: 'Pages 56–57', pages: [56, 57] }
+        ]
+      },
+      {
+        id: 'sec_7',
+        title: 'विभाग ७: राशी परिचय, विवाह व आचरण',
+        range: 'Pages 58–62',
+        topics: [
+          { id: 'p_58', title: 'आपली राशी परिचय व शुभ घटक मार्गदर्शन', pageStr: 'Page 58', pages: [58] },
+          { id: 'p_59', title: 'विवाह व दांपत्य जीवन (३६ गुण मिलान)', pageStr: 'Page 59', pages: [59] },
+          { id: 'p_60', title: 'पंचांग फलादेश व राहू-केतू विश्लेषण', pageStr: 'Page 60', pages: [60] },
+          { id: 'p_61', title: 'कुंडली सुलभ मार्गदर्शन व ज्ञान', pageStr: 'Page 61', pages: [61] },
+          { id: 'p_62', title: 'जीवन आचरण संहिता (काय करावे व काय करू नये)', pageStr: 'Page 62', pages: [62] }
+        ]
+      },
+      {
+        id: 'sec_8',
+        title: 'विभाग ८: 🔬 के.पी. वैज्ञानिक उपाय व वैधानिक उद्घोषणा',
+        range: 'Pages 63–78',
+        topics: [
+          { id: 'p_63', title: 'के.पी. ४-स्तरीय कार्येश मॅट्रिक्स', pageStr: 'Page 63', pages: [63] },
+          { id: 'p_64', title: 'के.पी. १२ भाव उपस्वामी (CSL) निष्कर्ष', pageStr: 'Page 64', pages: [64] },
+          { id: 'p_65', title: 'के.पी. वैज्ञानिक रत्न व वर्ज्य रत्न इशारा', pageStr: 'Page 65', pages: [65] },
+          { id: 'p_66_67', title: 'रोग निदान व कर्ज मुक्ती शास्त्रीय विधान', pageStr: 'Pages 66–67', pages: [66, 67] },
+          { id: 'p_68_70', title: 'रुद्राक्ष थेरपी, सिद्ध यंत्र व औषधी स्नान', pageStr: 'Pages 68–70', pages: [68, 69, 70] },
+          { id: 'p_71_73', title: 'लाल किताब तोडगे, ऋण मुक्ती व दान मुहूर्त', pageStr: 'Pages 71–73', pages: [71, 72, 73] },
+          { id: 'p_74_77', title: 'बीज मंत्र, स्तोत्रे, वास्तु संतुलन व उपवास', pageStr: 'Pages 74–77', pages: [74, 75, 76, 77] },
+          { id: 'p_78', title: 'वैधानिक उद्घोषणा व सर्वाधिकार सुरक्षित', pageStr: 'Page 78', pages: [78] }
+        ]
+      }
+    ];
+
+    let _sectionsUiRendered = false;
+    function renderReportSectionsUI() {
+      const container = document.getElementById('reportSectionsContainer');
+      if (!container) return;
+      
+      let html = '';
+      REPORT_SECTIONS_DATA.forEach(sec => {
+        html += `
+          <div style="background:#FFFFFF; border:1.5px solid #EADBC8; border-radius:10px; overflow:hidden; box-shadow:0 2px 8px rgba(124,45,18,0.05);">
+            <!-- Section Header -->
+            <div style="background:linear-gradient(135deg, #7C2D12 0%, #9A3412 100%); color:#FFFBEB; padding:7px 12px; display:flex; justify-content:space-between; align-items:center;">
+              <label style="display:flex; align-items:center; gap:8px; font-weight:800; font-size:12px; cursor:pointer; margin:0;">
+                <input type="checkbox" class="section-master-cb" data-section="${sec.id}" checked onchange="toggleSectionTopics('${sec.id}', this.checked)" style="width:15px; height:15px; accent-color:#F59E0B; cursor:pointer;"/>
+                <span>${sec.title}</span>
+              </label>
+              <span style="font-size:10px; background:rgba(254,243,199,0.25); color:#FEF3C7; padding:2px 7px; border-radius:10px; font-weight:700;">${sec.range}</span>
+            </div>
+            <!-- Topics Checklist -->
+            <div style="padding:8px 10px; display:flex; flex-direction:column; gap:5px; background:#FFFEFC;">
+        `;
+        
+        sec.topics.forEach(top => {
+          const pJoined = top.pages.join(',');
+          html += `
+            <label style="display:flex; justify-content:space-between; align-items:center; padding:4px 6px; border-radius:6px; background:#FAF6F0; border:1px solid #F3E8DC; font-size:11.5px; color:#2E1C10; cursor:pointer; transition:background 0.2s;" onmouseover="this.style.background='#F5EFEB'" onmouseout="this.style.background='#FAF6F0'">
+              <div style="display:flex; align-items:center; gap:7px; flex:1;">
+                <input type="checkbox" class="topic-page-cb" data-section="${sec.id}" data-pages="${pJoined}" checked onchange="onPageSelectionChanged(true)" style="width:14px; height:14px; accent-color:#7C2D12; cursor:pointer;"/>
+                <span style="font-weight:600;">${top.title}</span>
+              </div>
+              <span style="font-size:10.5px; font-weight:700; color:#9A3412; background:#FEF3C7; padding:1px 6px; border-radius:4px; border:1px solid #FDE68A; white-space:nowrap; margin-left:6px;">${top.pageStr}</span>
+            </label>
+          `;
+        });
+        
+        html += `
+            </div>
+          </div>
+        `;
+      });
+      
+      container.innerHTML = html;
+      _sectionsUiRendered = true;
+      onPageSelectionChanged(false);
+    }
+
+    function toggleCustomSelectorExpand() {
+      const content = document.getElementById('customSelectorContent');
+      const btn = document.getElementById('btnToggleSelector');
+      if (!content) return;
+      if (content.style.display === 'none') {
+        content.style.display = 'block';
+        if (btn) btn.innerText = '▲ पॅनल लपवा';
+      } else {
+        content.style.display = 'none';
+        if (btn) btn.innerText = '▼ पॅनल उघडा (Custom Pages)';
+      }
+    }
+
+    function getSelectedReportPages() {
+      const selected = new Set();
+      const checkboxes = document.querySelectorAll('.topic-page-cb:checked');
+      checkboxes.forEach(cb => {
+        const pagesAttr = cb.getAttribute('data-pages');
+        if (pagesAttr) {
+          pagesAttr.split(',').forEach(p => {
+            const n = parseInt(p.trim());
+            if (!isNaN(n)) selected.add(n);
+          });
+        }
+      });
+      
+      const autoCoverBack = document.getElementById('cbAutoCoverBack');
+      if (autoCoverBack && autoCoverBack.checked && selected.size > 0) {
+        selected.add(1);
+        selected.add(78);
+      }
+      
+      const result = Array.from(selected).sort((a, b) => a - b);
+      return result.length > 0 ? result : null;
+    }
+
+    let _previewDebounceTimer = null;
+    function onPageSelectionChanged(autoRefresh = true) {
+      const sel = getSelectedReportPages() || [];
+      const badge = document.getElementById('selectedPagesCount');
+      const summary = document.getElementById('selectedPagesSummaryText');
+      
+      const count = sel.length;
+      if (badge) {
+        badge.innerText = `${count} / 78 पृष्ठे निवडली`;
+        badge.style.background = count === 0 ? '#991B1B' : (count === 78 ? '#7C2D12' : '#059669');
+      }
+      if (summary) {
+        if (count === 78) {
+          summary.innerText = '(सर्व पृष्ठे १ ते ७८ समाविष्ट)';
+        } else if (count === 0) {
+          summary.innerText = '(कोणतेही पृष्ठ निवडलेले नाही — कृपया किमान १ विषय निवडा)';
+        } else if (count <= 10) {
+          summary.innerText = `(निवडलेली पृष्ठे: ${sel.join(', ')})`;
+        } else {
+          summary.innerText = `(निवडलेली पृष्ठे: ${sel.slice(0, 10).join(', ')}... आणि इतर ${count - 10} पृष्ठे)`;
+        }
+      }
+
+      // Update Section master checkboxes state
+      document.querySelectorAll('.section-master-cb').forEach(secCb => {
+        const secId = secCb.getAttribute('data-section');
+        const childCbs = document.querySelectorAll(`.topic-page-cb[data-section="${secId}"]`);
+        const checkedCount = document.querySelectorAll(`.topic-page-cb[data-section="${secId}"]:checked`).length;
+        secCb.checked = (checkedCount === childCbs.length && childCbs.length > 0);
+        secCb.indeterminate = (checkedCount > 0 && checkedCount < childCbs.length);
+      });
+
+      if (autoRefresh) {
+        clearTimeout(_previewDebounceTimer);
+        _previewDebounceTimer = setTimeout(() => {
+          loadInAppPdfPreview();
+        }, 450);
+      }
+    }
+
+    function selectAllReportPages() {
+      document.querySelectorAll('.topic-page-cb').forEach(cb => cb.checked = true);
+      onPageSelectionChanged(true);
+    }
+
+    function deselectAllReportPages() {
+      document.querySelectorAll('.topic-page-cb').forEach(cb => cb.checked = false);
+      onPageSelectionChanged(true);
+    }
+
+    function toggleSectionTopics(secId, isChecked) {
+      document.querySelectorAll(`.topic-page-cb[data-section="${secId}"]`).forEach(cb => {
+        cb.checked = isChecked;
+      });
+      onPageSelectionChanged(true);
+    }
+
+    function applyPagePreset(presetKey) {
+      document.querySelectorAll('.topic-page-cb').forEach(cb => cb.checked = false);
+      
+      if (presetKey === 'all') {
+        document.querySelectorAll('.topic-page-cb').forEach(cb => cb.checked = true);
+      } else if (presetKey === 'sec_2') {
+        document.querySelectorAll('.topic-page-cb[data-section="sec_2"]').forEach(cb => cb.checked = true);
+      } else if (presetKey === 'sec_3') {
+        document.querySelectorAll('.topic-page-cb[data-section="sec_3"]').forEach(cb => cb.checked = true);
+      } else if (presetKey === 'sec_4') {
+        document.querySelectorAll('.topic-page-cb[data-section="sec_4"]').forEach(cb => cb.checked = true);
+      } else if (presetKey === 'sec_5') {
+        document.querySelectorAll('.topic-page-cb[data-section="sec_5"]').forEach(cb => cb.checked = true);
+      } else if (presetKey === 'sec_8') {
+        document.querySelectorAll('.topic-page-cb[data-section="sec_8"]').forEach(cb => cb.checked = true);
+      } else if (presetKey === 'laghu') {
+        document.querySelectorAll('.topic-page-cb').forEach(cb => {
+          const p = cb.getAttribute('data-pages') || '';
+          if (p.includes('1') || p.includes('3') || p.includes('4') || p.includes('5')) {
+            cb.checked = true;
+          }
+        });
+      }
+      
+      onPageSelectionChanged(true);
+    }
+
+    async function downloadCustomPdf() {
+      const p = getFormPayload();
+      if (!p.name) {
+        alert('कृपया प्रथम जातकाचे नाव आणि जन्म माहिती भरा (Please enter native name & birth details first)');
+        const nameInput = document.getElementById('name');
+        if (nameInput) nameInput.focus();
+        return;
+      }
+      const sel = getSelectedReportPages();
+      if (!sel || sel.length === 0) {
+        alert('कृपया डाऊनलोड करण्यासाठी किमान १ पृष्ठ निवडा (Please select at least 1 page)');
+        return;
+      }
+      await exportPDF();
+    }
+
     // PDF Report Studio & Filmora-Style Progress
     function updateReportStudioState() {
+      if (!_sectionsUiRendered) renderReportSectionsUI();
       loadInAppPdfPreview();
     }
 
@@ -4925,6 +5242,12 @@ def index_ui():
       }
       const pkgSelect = document.getElementById('reportPackageSelect');
       if (pkgSelect && pkgSelect.value) p.report_package = pkgSelect.value;
+      if (typeof getSelectedReportPages === 'function') {
+        const customPages = getSelectedReportPages();
+        if (customPages && customPages.length > 0) {
+          p.selected_pages = customPages;
+        }
+      }
       const badge = document.getElementById('reportNativeBadge');
       if (badge) badge.innerText = 'Active Native: ' + p.name;
 
@@ -4937,7 +5260,9 @@ def index_ui():
         const html = await res.text();
         const frame = document.getElementById('reportFrame');
         if (frame) frame.srcdoc = html;
-      } catch (e) {}
+      } catch (e) {
+        console.error('loadInAppPdfPreview error:', e);
+      }
     }
 
 
@@ -4978,6 +5303,9 @@ def index_ui():
         if (!p.name) {
           alert('कृपया प्रथम जातकाचे नाव आणि जन्म माहिती भरा (Please enter native name & birth details first)');
           return;
+        }
+        if (typeof getSelectedReportPages === 'function') {
+          p.selected_pages = getSelectedReportPages();
         }
         fetch('/api/generate-html', {
           method: 'POST',
@@ -5957,6 +6285,7 @@ def index_ui():
       loadDashboard();
       loadClientsTable();
       loadBrandingSettings();
+      try { renderReportSectionsUI(); } catch (e) { console.warn('renderReportSectionsUI error:', e); }
       fetch('/api/heartbeat').catch(()=>{});
       setTimeout(loadDashboard, 1000);
       setTimeout(loadDashboard, 2500);
