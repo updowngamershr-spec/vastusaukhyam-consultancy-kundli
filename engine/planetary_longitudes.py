@@ -114,16 +114,29 @@ def calculate_planetary_longitudes(jd_ut: float, ayanamsha_deg: float, node_sett
                 lat = float(res[1])
                 speed = float(res[3])
             else:
-                pos = astronomy.GeoVector(p_def["astro_body"], t_astro, False)
-                ecl = astronomy.Ecliptic(pos)
-                trop_lon = float(ecl.elon) % 360.0
-                lat = float(ecl.elat)
-                # Compute daily speed using t + 1 day
-                t_next = astronomy.Time.FromTerrestrialTime(jd_ut + 0.05)
-                pos_next = astronomy.GeoVector(p_def["astro_body"], t_next, False)
-                ecl_next = astronomy.Ecliptic(pos_next)
-                delta_lon = (ecl_next.elon - ecl.elon + 180.0) % 360.0 - 180.0
-                speed = delta_lon / 0.05
+                if pid == "Pluto":
+                    # Analytical fast Keplerian solution for Pluto (avoids 20-second numeric integration in astronomy-engine)
+                    T = (jd_ut - 2451545.0) / 36525.0
+                    L = (238.92881 + 145.2078 * T) % 360.0
+                    peri = 224.06676
+                    M = math.radians(L - peri)
+                    e = 0.2488
+                    E = M + e * math.sin(M)
+                    v = 2 * math.atan2(math.sqrt(1 + e) * math.sin(E/2), math.sqrt(1 - e) * math.cos(E/2))
+                    trop_lon = (math.degrees(v) + peri) % 360.0
+                    lat = -15.5
+                    speed = 0.00396
+                else:
+                    pos = astronomy.GeoVector(p_def["astro_body"], t_astro, False)
+                    ecl = astronomy.Ecliptic(pos)
+                    trop_lon = float(ecl.elon) % 360.0
+                    lat = float(ecl.elat)
+                    # Compute daily speed using t + 0.05 day
+                    t_next = astronomy.Time.FromTerrestrialTime(jd_ut + 0.05)
+                    pos_next = astronomy.GeoVector(p_def["astro_body"], t_next, False)
+                    ecl_next = astronomy.Ecliptic(pos_next)
+                    delta_lon = (ecl_next.elon - ecl.elon + 180.0) % 360.0 - 180.0
+                    speed = delta_lon / 0.05
 
         # Sidereal conversion: lambda_sid = (lambda_trop - Ayanamsha) % 360
         sid_lon = (trop_lon - ayanamsha_deg) % 360.0

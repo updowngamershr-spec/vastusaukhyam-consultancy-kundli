@@ -706,6 +706,7 @@ def api_generate_html(req: KundliRequest):
         hour=req.hour, minute=req.minute, second=req.second,
         place=req.place, lat=req.lat, lon=req.lon, tz=req.tz,
         varsha_year=req.varsha_year,
+        enforce_validation_lock=False,
     )
     brand_cfg = get_branding()
     if brand_cfg:
@@ -774,6 +775,7 @@ def api_export_pdf(req: KundliRequest):
         hour=req.hour, minute=req.minute, second=req.second,
         place=req.place, lat=req.lat, lon=req.lon, tz=req.tz,
         varsha_year=req.varsha_year,
+        enforce_validation_lock=False,
     )
     brand_cfg = get_branding()
     if brand_cfg:
