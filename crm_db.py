@@ -130,6 +130,7 @@ def init_crm_db():
             tagline TEXT DEFAULT 'Ancient Vedic, KP & Lal Kitab Predictions',
             logo_data TEXT DEFAULT '',
             pdf_background TEXT DEFAULT 'parchment',
+            custom_bg_data TEXT DEFAULT '',
             updated_at TEXT NOT NULL
         )
     """)
@@ -174,6 +175,11 @@ def init_crm_db():
         cur.execute("ALTER TABLE branding ADD COLUMN pdf_background TEXT DEFAULT 'parchment'")
     except sqlite3.OperationalError:
         pass  # Column already exists
+        # Ensure custom_bg_data column exists in branding table
+    try:
+        cur.execute("ALTER TABLE branding ADD COLUMN custom_bg_data TEXT DEFAULT ''")
+    except sqlite3.OperationalError:
+        pass
     cur.execute("SELECT COUNT(*) FROM branding WHERE id = 1")
     if cur.fetchone()[0] == 0:
         cur.execute("""
@@ -219,8 +225,8 @@ def save_branding(data: dict):
     cur = conn.cursor()
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     cur.execute("""
-        INSERT INTO branding (id, astrologer_name, kendra_name, phone, email, address, tagline, logo_data, pdf_background, updated_at)
-        VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO branding (id, astrologer_name, kendra_name, phone, email, address, tagline, logo_data, pdf_background, custom_bg_data, updated_at)
+        VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET
             astrologer_name=excluded.astrologer_name,
             kendra_name=excluded.kendra_name,
@@ -230,6 +236,7 @@ def save_branding(data: dict):
             tagline=excluded.tagline,
             logo_data=excluded.logo_data,
             pdf_background=excluded.pdf_background,
+            custom_bg_data=excluded.custom_bg_data,
             updated_at=excluded.updated_at
     """, (
         data.get("astrologer_name", "Vedic Astrologer"),
@@ -240,6 +247,7 @@ def save_branding(data: dict):
         data.get("tagline", "Ancient Vedic, KP & Lal Kitab Predictions"),
         data.get("logo_data", ""),
         data.get("pdf_background", "parchment"),
+        data.get("custom_bg_data", ""),
         now_str
     ))
     conn.commit()

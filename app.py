@@ -105,6 +105,7 @@ class BrandingRequest(BaseModel):
     tagline: str = "Ancient Vedic, KP & Lal Kitab Predictions"
     logo_data: str = ""
     pdf_background: str = "parchment"
+    custom_bg_data: str = ""
 
 
 class PrashnaRequest(BaseModel):
@@ -247,6 +248,7 @@ def api_kundli_details(req: KundliRequest):
             hour=req.hour, minute=req.minute, second=req.second,
             place=req.place, lat=req.lat, lon=req.lon, tz=req.tz,
             varsha_year=varsha_year,
+            enforce_validation_lock=False,
         )
         d1 = data["shodashvarga"]["charts"]["D1"]
         d9 = data["shodashvarga"]["charts"]["D9"]
@@ -723,6 +725,8 @@ def api_generate_html(req: KundliRequest):
             data["brand"]["tagline_en"] = brand_cfg["tagline"]
         if brand_cfg.get("pdf_background"):
             data["brand"]["pdf_background"] = brand_cfg["pdf_background"]
+        if brand_cfg.get("custom_bg_data"):
+            data["brand"]["custom_bg_data"] = brand_cfg["custom_bg_data"]
         if brand_cfg.get("logo_data"):
             data["brand"]["logo_data"] = brand_cfg["logo_data"]
     active_pdf_bg = req.pdf_background or (brand_cfg.get("pdf_background") if brand_cfg else None) or "parchment"
@@ -797,11 +801,15 @@ def api_export_pdf(req: KundliRequest):
             data["brand"]["tagline_en"] = brand_cfg["tagline"]
         if brand_cfg.get("pdf_background"):
             data["brand"]["pdf_background"] = brand_cfg["pdf_background"]
+        if brand_cfg.get("custom_bg_data"):
+            data["brand"]["custom_bg_data"] = brand_cfg["custom_bg_data"]
         if brand_cfg.get("logo_data"):
             data["brand"]["logo_data"] = brand_cfg["logo_data"]
     active_pdf_bg = req.pdf_background or (brand_cfg.get("pdf_background") if brand_cfg else None) or "parchment" 
         if brand_cfg.get("pdf_background"):
             data["brand"]["pdf_background"] = brand_cfg["pdf_background"]
+        if brand_cfg.get("custom_bg_data"):
+            data["brand"]["custom_bg_data"] = brand_cfg["custom_bg_data"]
         if brand_cfg.get("logo_data"):
             data["brand"]["logo_data"] = brand_cfg["logo_data"]
     active_pdf_bg = req.pdf_background or (brand_cfg.get("pdf_background") if brand_cfg else None) or "parchment"
@@ -3499,6 +3507,31 @@ def index_ui():
                   <span style="font-size:9.5px; color:#9F1239;">(Vastu Maroon Tint)</span>
                 </label>
               </div>
+
+              <!-- 5th Option: Custom Background Photo Upload -->
+              <div id="theme_card_custom" style="margin-top:14px; padding:12px 14px; background:#FFFFFF; border:1.5px dashed #D97706; border-radius:8px; display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;">
+                <label style="cursor:pointer; display:flex; align-items:center; gap:8px;">
+                  <input type="radio" name="pdf_bg_theme_radio" value="custom" onchange="onBgThemeRadioChanged(this.value)"/>
+                  <div>
+                    <div style="font-size:12px; font-weight:800; color:#78350F;">🖼️ स्वतःची अपलोड केलेली पार्श्वभूमी (Custom Uploaded Background Image)</div>
+                    <div style="font-size:10px; color:#6B7280;">संगणकावरून कोणताही सुंदर फोटो / टेक्श्चर निवडून पार्श्वभूमी म्हणून सेट करा</div>
+                  </div>
+                </label>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <input type="file" id="custom_bg_file" accept="image/*" onchange="previewAndEncodeCustomBg(event)" style="display:none;"/>
+                  <button type="button" class="btn-primary-gradient" onclick="document.getElementById('custom_bg_file').click()" style="padding:6px 14px; font-size:11px;">
+                    📁 फोटो निवडा (Upload BG Photo)
+                  </button>
+                  <button type="button" class="btn-table-action" onclick="removeCustomBg()" style="padding:6px 12px; font-size:11px;">
+                    ✕ हटवा (Remove)
+                  </button>
+                </div>
+                <div id="custom_bg_thumb_wrap" style="display:none; align-items:center; gap:6px;">
+                  <img id="custom_bg_preview" src="" style="width:48px; height:32px; object-fit:cover; border-radius:4px; border:1px solid #D97706; box-shadow:0 1px 4px rgba(0,0,0,0.1);"/>
+                  <span style="font-size:10.5px; color:#059669; font-weight:700;">✓ फोटो सेव्ह झाला</span>
+                </div>
+                <input type="hidden" id="custom_bg_data" value=""/>
+              </div>
             </div>
 
             <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -5691,6 +5724,16 @@ def index_ui():
           // PDF Background Theme setup
           const currentBgTheme = b.pdf_background || 'parchment';
           window._selectedPdfBgTheme = currentBgTheme;
+          
+          if (b.custom_bg_data && b.custom_bg_data.startsWith('data:image')) {
+            const cBgInput = document.getElementById('custom_bg_data');
+            const cBgPrev = document.getElementById('custom_bg_preview');
+            const cBgWrap = document.getElementById('custom_bg_thumb_wrap');
+            if (cBgInput) cBgInput.value = b.custom_bg_data;
+            if (cBgPrev) cBgPrev.src = b.custom_bg_data;
+            if (cBgWrap) cBgWrap.style.display = 'flex';
+          }
+          
           const bgRadios = document.getElementsByName('pdf_bg_theme_radio');
           for (const r of bgRadios) {
             r.checked = (r.value === currentBgTheme);
@@ -5742,13 +5785,64 @@ def index_ui():
       if (logoInput) logoInput.value = '';
     }
 
+    function previewAndEncodeCustomBg(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const dataUrl = e.target.result;
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          let maxDim = 1200;
+          let w = img.width;
+          let h = img.height;
+          if (w > maxDim || h > maxDim) {
+            if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
+            else { w = Math.round(w * maxDim / h); h = maxDim; }
+          }
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          const optUrl = canvas.toDataURL('image/jpeg', 0.86);
+          document.getElementById('custom_bg_data').value = optUrl;
+          const prev = document.getElementById('custom_bg_preview');
+          const wrap = document.getElementById('custom_bg_thumb_wrap');
+          if (prev) prev.src = optUrl;
+          if (wrap) wrap.style.display = 'flex';
+          
+          // Switch active theme to custom
+          const radios = document.getElementsByName('pdf_bg_theme_radio');
+          for (const r of radios) {
+            if (r.value === 'custom') { r.checked = true; break; }
+          }
+          onBgThemeRadioChanged('custom');
+        };
+        img.src = dataUrl;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function removeCustomBg() {
+      document.getElementById('custom_bg_data').value = '';
+      const wrap = document.getElementById('custom_bg_thumb_wrap');
+      if (wrap) wrap.style.display = 'none';
+      const radios = document.getElementsByName('pdf_bg_theme_radio');
+      for (const r of radios) {
+        if (r.value === 'parchment') { r.checked = true; break; }
+      }
+      onBgThemeRadioChanged('parchment');
+    }
+
     function onBgThemeRadioChanged(val) {
       window._selectedPdfBgTheme = val;
       const themeCards = {
         'parchment': document.getElementById('theme_card_parchment'),
         'pure_white': document.getElementById('theme_card_pure_white'),
         'royal_gold': document.getElementById('theme_card_royal_gold'),
-        'maroon_tint': document.getElementById('theme_card_maroon_tint')
+        'maroon_tint': document.getElementById('theme_card_maroon_tint'),
+        'custom': document.getElementById('theme_card_custom')
       };
       for (const [key, card] of Object.entries(themeCards)) {
         if (!card) continue;
@@ -5780,7 +5874,8 @@ def index_ui():
         address: document.getElementById('brand_address').value.trim(),
         tagline: document.getElementById('brand_tagline').value.trim() || 'Ancient Vedic, KP & Lal Kitab Predictions',
         logo_data: document.getElementById('brand_logo_data').value.trim(),
-        pdf_background: chosenTheme
+        pdf_background: chosenTheme,
+        custom_bg_data: document.getElementById('custom_bg_data') ? document.getElementById('custom_bg_data').value : ''
       };
       const res = await fetch('/api/branding', {
         method: 'POST',

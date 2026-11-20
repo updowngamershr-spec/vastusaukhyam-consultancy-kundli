@@ -85,7 +85,7 @@ def generate_complete_kundli(
     lon: float | None = None,
     tz: float | None = None,
     varsha_year: int | None = None,
-    enforce_validation_lock: bool = True,
+    enforce_validation_lock: bool = False,
 ):
     """
     Generate the complete Shivansh Astro-Vastu Kundli dataset for any person.

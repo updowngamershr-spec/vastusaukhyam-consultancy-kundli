@@ -40,8 +40,15 @@ try:
 except Exception:
     GANESHA_BASE64 = ""
 
+try:
+    from engine._ganesha_landscape_b64 import GANESHA_LANDSCAPE_BASE64
+except Exception:
+    GANESHA_LANDSCAPE_BASE64 = ""
+
 def get_image_base64(fname: str) -> str:
     """Return data URI for an optimized asset image."""
+    if "landscape" in fname.lower() and GANESHA_LANDSCAPE_BASE64:
+        return GANESHA_LANDSCAPE_BASE64
     if "ganesh" in fname.lower() and GANESHA_BASE64:
         return GANESHA_BASE64
     if "logo" in fname.lower() and SHIVANSH_LOGO_BASE64:
@@ -342,6 +349,7 @@ def build_full_56_page_html(data: dict, lang: str = "mr", package: str = "maha",
     kendra_name_val = brand.get("kendra_name") or brand.get("name_en") or "वास्तुसौख्यम् कन्सलटन्सी"
     brand_sub_name = f"{kendra_name_val} (महाराष्ट्रियन मराठी आवृत्ती)" if is_mr else brand.get("name_hi", f"{kendra_name_val} (Vastusaukhyam Consultancy)")
     ganesha_emblem = GANESHA_BASE64 or get_image_base64("ganesha_circular.png") or get_image_base64("ganesha.png")
+    ganesha_landscape_emblem = GANESHA_LANDSCAPE_BASE64 or get_image_base64("ganesha_landscape.jpg")
     cover_logo = brand.get("logo_data") or SHIVANSH_LOGO_BASE64 or get_image_base64("opt_shivansh_logo.jpg")
     p1_html = f"""
     <div class="kundli-page cover-page">
@@ -389,6 +397,15 @@ def build_full_56_page_html(data: dict, lang: str = "mr", package: str = "maha",
               </tr>
             </table>
           </div>
+
+          <!-- Divine Landscape Ganesha Artwork (Fills lower empty space) -->
+          <div class="cover-ganesha-landscape" style="margin: 12px 0 8px 0; text-align: center; width: 100%;">
+            <img src="{ganesha_landscape_emblem}" style="width: 100%; max-height: 195px; object-fit: cover; border-radius: 12px; border: 2.5px solid #D4AF37; box-shadow: 0 6px 24px rgba(124,45,18,0.35); display: block;" alt="॥ श्री विघ्नहर्ता गणेश ॥"/>
+            <div style="font-size: 11px; font-weight: 800; color: #991B1B; letter-spacing: 1.5px; margin-top: 6px; text-align: center;">
+              ॥ वक्रतुण्ड महाकाय सूर्यकोटि समप्रभ । निर्विघ्नं कुरु मे देव सर्वकार्येषु सर्वदा ॥
+            </div>
+          </div>
+
           <div class="cover-footer-stamp">
             <span>__TOTAL_PAGES__-Page Complete Authentic Edition</span> • <span>100% Ad-Free Sacred Report</span>
           </div>
@@ -2221,6 +2238,12 @@ def build_full_56_page_html(data: dict, lang: str = "mr", package: str = "maha",
             radial-gradient(circle at 50% 15%, rgba(254, 205, 211, 0.7) 0%, rgba(255, 241, 242, 0.4) 50%, transparent 80%),
             linear-gradient(135deg, #FFF1F2 0%, #FFE4E6 100%)
         """
+    elif active_theme in ("custom", "image", "upload") or (brand.get("custom_bg_data") and active_theme == "custom"):
+        custom_img = brand.get("custom_bg_data", "")
+        bg_page = f"url('{custom_img}') center/cover no-repeat"
+        bg_body = "#F5EFEB"
+        border_page = "1.5px solid rgba(194, 65, 12, 0.35)"
+        cover_bg = f"url('{custom_img}') center/cover no-repeat"
     else:  # parchment (default)
         bg_page = "rgba(255, 253, 249, 0.95)"
         bg_body = "radial-gradient(circle at 10% 20%, #F5EFEB 0%, #E8DFD8 90%)"
@@ -2292,6 +2315,8 @@ def build_full_56_page_html(data: dict, lang: str = "mr", package: str = "maha",
       min-height: 284mm;
       max-height: 284mm;
       margin: 12px auto;
+      background-size: cover !important;
+      background-position: center !important;
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       border-radius: 14px;
