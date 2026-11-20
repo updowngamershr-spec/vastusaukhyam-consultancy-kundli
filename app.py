@@ -93,16 +93,18 @@ class KundliRequest(BaseModel):
     chart_style: str = "north"
     report_package: str = "maha"
     selected_pages: list[int] | None = None
+    pdf_background: str = "parchment"
 
 
 class BrandingRequest(BaseModel):
-    astrologer_name: str = ""
-    kendra_name: str = "Shivansh Astro-Vastu"
-    phone: str = ""
+    astrologer_name: str = "Vedic Astrologer"
+    kendra_name: str = "वास्तुसौख्यम् कन्सलटन्सी"
+    phone: str = "9657196366"
     email: str = ""
-    address: str = ""
+    address: str = "Maharashtra, India"
     tagline: str = "Ancient Vedic, KP & Lal Kitab Predictions"
     logo_data: str = ""
+    pdf_background: str = "parchment"
 
 
 class PrashnaRequest(BaseModel):
@@ -719,7 +721,12 @@ def api_generate_html(req: KundliRequest):
             data["brand"]["phone"] = brand_cfg["phone"]
         if brand_cfg.get("tagline"):
             data["brand"]["tagline_en"] = brand_cfg["tagline"]
-    html_str = build_full_56_page_html(data, lang=req.lang, package=req.report_package, selected_pages=req.selected_pages)
+        if brand_cfg.get("pdf_background"):
+            data["brand"]["pdf_background"] = brand_cfg["pdf_background"]
+        if brand_cfg.get("logo_data"):
+            data["brand"]["logo_data"] = brand_cfg["logo_data"]
+    active_pdf_bg = req.pdf_background or (brand_cfg.get("pdf_background") if brand_cfg else None) or "parchment"
+    html_str = build_full_56_page_html(data, lang=req.lang, package=req.report_package, selected_pages=req.selected_pages, pdf_bg_theme=active_pdf_bg)
     return HTMLResponse(content=html_str)
 
 
@@ -788,7 +795,17 @@ def api_export_pdf(req: KundliRequest):
             data["brand"]["phone"] = brand_cfg["phone"]
         if brand_cfg.get("tagline"):
             data["brand"]["tagline_en"] = brand_cfg["tagline"]
-    html_str = build_full_56_page_html(data, lang=req.lang, package=req.report_package, selected_pages=req.selected_pages)
+        if brand_cfg.get("pdf_background"):
+            data["brand"]["pdf_background"] = brand_cfg["pdf_background"]
+        if brand_cfg.get("logo_data"):
+            data["brand"]["logo_data"] = brand_cfg["logo_data"]
+    active_pdf_bg = req.pdf_background or (brand_cfg.get("pdf_background") if brand_cfg else None) or "parchment" 
+        if brand_cfg.get("pdf_background"):
+            data["brand"]["pdf_background"] = brand_cfg["pdf_background"]
+        if brand_cfg.get("logo_data"):
+            data["brand"]["logo_data"] = brand_cfg["logo_data"]
+    active_pdf_bg = req.pdf_background or (brand_cfg.get("pdf_background") if brand_cfg else None) or "parchment"
+    html_str = build_full_56_page_html(data, lang=req.lang, package=req.report_package, selected_pages=req.selected_pages, pdf_bg_theme=active_pdf_bg)
     safe_name = make_safe_filename(req.name)
     pkg_name = (req.report_package or "VIP").upper()
     ts_str = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -966,7 +983,7 @@ def index_ui():
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>शिवांश ॲस्ट्रो-वास्तू प्रोफेशनल - महाराष्ट्रियन मराठी (Shivansh Astro-Vastu)</title>
+  <title>वास्तुसौख्यम् कन्सलटन्सी - महाराष्ट्रियन मराठी (Vastusaukhyam Consultancy)</title>
   <link rel="icon" type="image/x-icon" href="/favicon.ico"/>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2125,10 +2142,10 @@ def index_ui():
       background: linear-gradient(135deg, #FFFBEB 0%, #FDE68A 30%, #D4AF37 70%, #92400E 100%);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0 2px 20px rgba(212,175,55,0.3); text-align: center;
     ">
-      SHIVANSH ASTRO-VASTU PROFESSIONAL
+      वास्तुसौख्यम् कन्सलटन्सी
     </h1>
     <div style="font-size: 12px; color: #D1D5DB; letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 24px; text-align: center;">
-      Vedic Astrology • Krishnamurti Paddhati (KP) • Lal Kitab 1952 Suite
+      VASTUSAUKHYAM ASTRO-VASTU CONSULTANCY • 📞 9657196366
     </div>
 
     <!-- 5 Sacred Deities Horizontal Preview -->
@@ -2320,8 +2337,8 @@ def index_ui():
         <div class="sidebar-brand" style="display:flex; align-items:center; gap:8px;">
           <img src="/assets/images/opt_shivansh_logo.jpg" style="width:42px; height:42px; border-radius:50%; border:2px solid #D4AF37; box-shadow:0 2px 6px rgba(124,45,18,0.3); object-fit:cover;" alt="Shivansh Logo"/>
           <div class="brand-text">
-            <div class="title" style="font-size:14px; font-weight:900; letter-spacing:0.5px;">SHIVANSH</div>
-            <div class="sub" style="font-size:10px; color:#FDE68A;">Astro-Vastu &amp; Kundli Suite</div>
+            <div class="title" style="font-size:13px; font-weight:900; letter-spacing:0.3px;">वास्तुसौख्यम्</div>
+            <div class="sub" style="font-size:10px; color:#FDE68A;">कन्सलटन्सी • Astro-Vastu</div>
           </div>
           <button class="mobile-sidebar-close" onclick="toggleMobileSidebar(false)" aria-label="Close Menu">✕</button>
         </div>
@@ -3446,6 +3463,42 @@ def index_ui():
             <div class="form-group" style="margin-bottom:18px;">
               <label>Tagline / Moto (प्रचार वाक्य)</label>
               <input type="text" id="brand_tagline" placeholder="e.g. Ancient Vedic, KP &amp; Lal Kitab Astrological Insights"/>
+            </div>
+
+            <!-- PDF BACKGROUND THEME CUSTOMIZER -->
+            <div style="background:#FFFBEB; border:1.5px solid #FCD34D; padding:16px; border-radius:10px; margin-bottom:20px; box-shadow:0 2px 8px rgba(217,119,6,0.08);">
+              <h4 style="margin:0 0 6px 0; color:#7C2D12; font-size:13.5px; display:flex; align-items:center; gap:8px;">
+                🎨 पीडीएफ पार्श्वभूमी थीम निवडा (PDF Background Theme)
+              </h4>
+              <p style="font-size:11.5px; color:#574032; margin:0 0 12px 0; line-height:1.45;">
+                आपल्या ग्राहकांसाठी डाऊनलोड होणाऱ्या कुंडली अहवालाची पार्श्वभूमी (Background Theme) निवडा. ही निवड सर्व अहवालांवर थेट लागू होईल:
+              </p>
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:12px;">
+                <label class="bg-theme-card" id="theme_card_parchment" style="cursor:pointer; display:flex; flex-direction:column; align-items:center; padding:12px 8px; border:2.5px solid #D97706; border-radius:8px; background:#FFFDF9; box-shadow:0 3px 10px rgba(217,119,6,0.15); text-align:center; transition:all 0.2s ease;">
+                  <input type="radio" name="pdf_bg_theme_radio" value="parchment" checked onchange="onBgThemeRadioChanged(this.value)" style="margin-bottom:8px;"/>
+                  <div style="width:100%; height:32px; background:#FFFDF9; border:1px solid #D97706; border-radius:5px; margin-bottom:8px; box-shadow:inset 0 1px 3px rgba(0,0,0,0.06);"></div>
+                  <span style="font-size:11.5px; font-weight:800; color:#78350F;">📜 वैदिक पार्चमेंट</span>
+                  <span style="font-size:9.5px; color:#92400E;">(Royal Vintage Cream)</span>
+                </label>
+                <label class="bg-theme-card" id="theme_card_pure_white" style="cursor:pointer; display:flex; flex-direction:column; align-items:center; padding:12px 8px; border:1.5px solid #D1D5DB; border-radius:8px; background:#FFFFFF; box-shadow:0 2px 6px rgba(0,0,0,0.04); text-align:center; transition:all 0.2s ease;">
+                  <input type="radio" name="pdf_bg_theme_radio" value="pure_white" onchange="onBgThemeRadioChanged(this.value)" style="margin-bottom:8px;"/>
+                  <div style="width:100%; height:32px; background:#FFFFFF; border:1px solid #9CA3AF; border-radius:5px; margin-bottom:8px; box-shadow:inset 0 1px 3px rgba(0,0,0,0.06);"></div>
+                  <span style="font-size:11.5px; font-weight:800; color:#1F2937;">⚪ शुभ्र पांढरा</span>
+                  <span style="font-size:9.5px; color:#4B5563;">(Pure White / Ink Saver)</span>
+                </label>
+                <label class="bg-theme-card" id="theme_card_royal_gold" style="cursor:pointer; display:flex; flex-direction:column; align-items:center; padding:12px 8px; border:1.5px solid #F59E0B; border-radius:8px; background:#FEF9C3; box-shadow:0 2px 6px rgba(0,0,0,0.04); text-align:center; transition:all 0.2s ease;">
+                  <input type="radio" name="pdf_bg_theme_radio" value="royal_gold" onchange="onBgThemeRadioChanged(this.value)" style="margin-bottom:8px;"/>
+                  <div style="width:100%; height:32px; background:linear-gradient(135deg, #FEF08A 0%, #FDE047 100%); border:1px solid #CA8A04; border-radius:5px; margin-bottom:8px; box-shadow:inset 0 1px 3px rgba(0,0,0,0.06);"></div>
+                  <span style="font-size:11.5px; font-weight:800; color:#854D0E;">🟡 राजेशाही सुवर्ण</span>
+                  <span style="font-size:9.5px; color:#A16207;">(Auspicious Warm Gold)</span>
+                </label>
+                <label class="bg-theme-card" id="theme_card_maroon_tint" style="cursor:pointer; display:flex; flex-direction:column; align-items:center; padding:12px 8px; border:1.5px solid #991B1B; border-radius:8px; background:#FEF2F2; box-shadow:0 2px 6px rgba(0,0,0,0.04); text-align:center; transition:all 0.2s ease;">
+                  <input type="radio" name="pdf_bg_theme_radio" value="maroon_tint" onchange="onBgThemeRadioChanged(this.value)" style="margin-bottom:8px;"/>
+                  <div style="width:100%; height:32px; background:linear-gradient(135deg, #FFE4E6 0%, #FECDD3 100%); border:1px solid #BE123C; border-radius:5px; margin-bottom:8px; box-shadow:inset 0 1px 3px rgba(0,0,0,0.06);"></div>
+                  <span style="font-size:11.5px; font-weight:800; color:#881337;">🔴 वास्तु महिरुण</span>
+                  <span style="font-size:9.5px; color:#9F1239;">(Vastu Maroon Tint)</span>
+                </label>
+              </div>
             </div>
 
             <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -5257,6 +5310,7 @@ def index_ui():
           p.selected_pages = customPages;
         }
       }
+      p.pdf_background = window._selectedPdfBgTheme || 'parchment';
       const badge = document.getElementById('reportNativeBadge');
       if (badge) badge.innerText = 'Active Native: ' + p.name;
 
@@ -5627,12 +5681,23 @@ def index_ui():
             const el = document.getElementById(id);
             if (el) el.value = val || '';
           };
-          setField('brand_astro_name', b.astrologer_name || 'Mayur Mandhare (BE.E&TC)');
-          setField('brand_kendra_name', b.kendra_name || 'Shivansh Astro-Vastu');
-          setField('brand_phone', b.phone || '9373058052');
+          setField('brand_astro_name', b.astrologer_name || 'Vedic Astrologer');
+          setField('brand_kendra_name', b.kendra_name || 'वास्तुसौख्यम् कन्सलटन्सी');
+          setField('brand_phone', b.phone || '9657196366');
           setField('brand_email', b.email || '');
           setField('brand_address', b.address || '');
           setField('brand_tagline', b.tagline || 'Ancient Vedic, KP & Lal Kitab Predictions');
+          
+          // PDF Background Theme setup
+          const currentBgTheme = b.pdf_background || 'parchment';
+          window._selectedPdfBgTheme = currentBgTheme;
+          const bgRadios = document.getElementsByName('pdf_bg_theme_radio');
+          for (const r of bgRadios) {
+            r.checked = (r.value === currentBgTheme);
+          }
+          if (typeof onBgThemeRadioChanged === 'function') {
+            onBgThemeRadioChanged(currentBgTheme);
+          }
           const preview = document.getElementById('brand_logo_preview');
           const logoInput = document.getElementById('brand_logo_data');
           if (b.logo_data && b.logo_data.startsWith('data:image')) {
@@ -5677,15 +5742,45 @@ def index_ui():
       if (logoInput) logoInput.value = '';
     }
 
+    function onBgThemeRadioChanged(val) {
+      window._selectedPdfBgTheme = val;
+      const themeCards = {
+        'parchment': document.getElementById('theme_card_parchment'),
+        'pure_white': document.getElementById('theme_card_pure_white'),
+        'royal_gold': document.getElementById('theme_card_royal_gold'),
+        'maroon_tint': document.getElementById('theme_card_maroon_tint')
+      };
+      for (const [key, card] of Object.entries(themeCards)) {
+        if (!card) continue;
+        if (key === val) {
+          card.style.border = '2.5px solid #D97706';
+          card.style.boxShadow = '0 4px 14px rgba(217,119,6,0.25)';
+          card.style.transform = 'scale(1.02)';
+        } else {
+          card.style.border = '1.5px solid #D1D5DB';
+          card.style.boxShadow = '0 2px 6px rgba(0,0,0,0.04)';
+          card.style.transform = 'scale(1)';
+        }
+      }
+    }
+
     async function saveBrandingSettings() {
+      let chosenTheme = window._selectedPdfBgTheme || 'parchment';
+      const bgRadios = document.getElementsByName('pdf_bg_theme_radio');
+      for (const r of bgRadios) {
+        if (r.checked) { chosenTheme = r.value; break; }
+      }
+      window._selectedPdfBgTheme = chosenTheme;
+
       const payload = {
-        astrologer_name: document.getElementById('brand_astro_name').value.trim(),
-        kendra_name: document.getElementById('brand_kendra_name').value.trim(),
-        phone: document.getElementById('brand_phone').value.trim(),
+        astrologer_name: document.getElementById('brand_astro_name').value.trim() || 'Vedic Astrologer',
+        kendra_name: document.getElementById('brand_kendra_name').value.trim() || 'वास्तुसौख्यम् कन्सलटन्सी',
+        phone: document.getElementById('brand_phone').value.trim() || '9657196366',
         email: document.getElementById('brand_email').value.trim(),
         address: document.getElementById('brand_address').value.trim(),
-        tagline: document.getElementById('brand_tagline').value.trim(),
-        logo_data: document.getElementById('brand_logo_data').value.trim()
+        tagline: document.getElementById('brand_tagline').value.trim() || 'Ancient Vedic, KP & Lal Kitab Predictions',
+        logo_data: document.getElementById('brand_logo_data').value.trim(),
+        pdf_background: chosenTheme
       };
       const res = await fetch('/api/branding', {
         method: 'POST',

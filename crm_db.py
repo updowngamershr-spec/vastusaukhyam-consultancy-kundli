@@ -122,13 +122,14 @@ def init_crm_db():
     cur.execute("""
         CREATE TABLE IF NOT EXISTS branding (
             id INTEGER PRIMARY KEY,
-            astrologer_name TEXT DEFAULT '',
-            kendra_name TEXT DEFAULT 'Shivansh Astro-Vastu',
-            phone TEXT DEFAULT '',
+            astrologer_name TEXT DEFAULT 'Vedic Astrologer',
+            kendra_name TEXT DEFAULT 'वास्तुसौख्यम् कन्सलटन्सी',
+            phone TEXT DEFAULT '9657196366',
             email TEXT DEFAULT '',
-            address TEXT DEFAULT '',
+            address TEXT DEFAULT 'Maharashtra, India',
             tagline TEXT DEFAULT 'Ancient Vedic, KP & Lal Kitab Predictions',
             logo_data TEXT DEFAULT '',
+            pdf_background TEXT DEFAULT 'parchment',
             updated_at TEXT NOT NULL
         )
     """)
@@ -168,11 +169,16 @@ def init_crm_db():
             "ACTIVE"
         ))
 
+        # Ensure pdf_background column exists in branding table
+    try:
+        cur.execute("ALTER TABLE branding ADD COLUMN pdf_background TEXT DEFAULT 'parchment'")
+    except sqlite3.OperationalError:
+        pass  # Column already exists
     cur.execute("SELECT COUNT(*) FROM branding WHERE id = 1")
     if cur.fetchone()[0] == 0:
         cur.execute("""
-            INSERT INTO branding (id, astrologer_name, kendra_name, phone, email, address, tagline, updated_at)
-            VALUES (1, 'Vedic Astrologer', 'Shivansh Astro-Vastu', '', '', 'India', 'Ancient Vedic, KP & Lal Kitab Predictions', ?)
+            INSERT INTO branding (id, astrologer_name, kendra_name, phone, email, address, tagline, pdf_background, updated_at)
+            VALUES (1, 'Vedic Astrologer', 'वास्तुसौख्यम् कन्सलटन्सी', '9657196366', '', 'Maharashtra, India', 'Ancient Vedic, KP & Lal Kitab Predictions', 'parchment', ?)
         """, (datetime.now().strftime("%Y-%m-%d %H:%M:%S"),))
     conn.commit()
     conn.close()
@@ -186,14 +192,24 @@ def get_branding():
     cur.execute("SELECT * FROM branding WHERE id = 1")
     row = cur.fetchone()
     conn.close()
-    return dict(row) if row else {
+    if row:
+        d = dict(row)
+        if not d.get("pdf_background"):
+            d["pdf_background"] = "parchment"
+        if not d.get("kendra_name") or d.get("kendra_name") == "Shivansh Astro-Vastu":
+            d["kendra_name"] = "वास्तुसौख्यम् कन्सलटन्सी"
+        if not d.get("phone") or d.get("phone") == "9373058052":
+            d["phone"] = "9657196366"
+        return d
+    return {
         "astrologer_name": "Vedic Astrologer",
-        "kendra_name": "Shivansh Astro-Vastu",
-        "phone": "",
+        "kendra_name": "वास्तुसौख्यम् कन्सलटन्सी",
+        "phone": "9657196366",
         "email": "",
-        "address": "India",
+        "address": "Maharashtra, India",
         "tagline": "Ancient Vedic, KP & Lal Kitab Predictions",
-        "logo_data": ""
+        "logo_data": "",
+        "pdf_background": "parchment"
     }
 
 
@@ -203,8 +219,8 @@ def save_branding(data: dict):
     cur = conn.cursor()
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     cur.execute("""
-        INSERT INTO branding (id, astrologer_name, kendra_name, phone, email, address, tagline, logo_data, updated_at)
-        VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO branding (id, astrologer_name, kendra_name, phone, email, address, tagline, logo_data, pdf_background, updated_at)
+        VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET
             astrologer_name=excluded.astrologer_name,
             kendra_name=excluded.kendra_name,
@@ -213,15 +229,17 @@ def save_branding(data: dict):
             address=excluded.address,
             tagline=excluded.tagline,
             logo_data=excluded.logo_data,
+            pdf_background=excluded.pdf_background,
             updated_at=excluded.updated_at
     """, (
-        data.get("astrologer_name", ""),
-        data.get("kendra_name", "Shivansh Astro-Vastu"),
-        data.get("phone", ""),
+        data.get("astrologer_name", "Vedic Astrologer"),
+        data.get("kendra_name", "वास्तुसौख्यम् कन्सलटन्सी"),
+        data.get("phone", "9657196366"),
         data.get("email", ""),
-        data.get("address", ""),
+        data.get("address", "Maharashtra, India"),
         data.get("tagline", "Ancient Vedic, KP & Lal Kitab Predictions"),
         data.get("logo_data", ""),
+        data.get("pdf_background", "parchment"),
         now_str
     ))
     conn.commit()

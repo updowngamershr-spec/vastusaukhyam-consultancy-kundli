@@ -35,12 +35,22 @@ try:
 except Exception:
     SHIVANSH_LOGO_BASE64 = ""
 
+try:
+    from engine._ganesha_b64 import GANESHA_BASE64
+except Exception:
+    GANESHA_BASE64 = ""
+
 def get_image_base64(fname: str) -> str:
     """Return data URI for an optimized asset image."""
-    if "logo" in fname and SHIVANSH_LOGO_BASE64:
+    if "ganesh" in fname.lower() and GANESHA_BASE64:
+        return GANESHA_BASE64
+    if "logo" in fname.lower() and SHIVANSH_LOGO_BASE64:
         return SHIVANSH_LOGO_BASE64
     base_dir = getattr(sys, '_MEIPASS', os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
     candidates = [
+        os.path.join(base_dir, "assets", "gods", fname),
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "gods", fname),
+        os.path.join(base_dir, "_internal", "assets", "gods", fname),
         os.path.join(base_dir, "assets", "images", fname),
         os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "images", fname),
         os.path.join(base_dir, "_internal", "assets", "images", fname),
@@ -61,31 +71,31 @@ def _page_wrapper(page_num: int, meta: dict, brand: dict, title_en: str, title_h
     if lang in ("mr", "marathi"):
         title_str = to_marathi(title_hi) if title_hi else to_marathi(title_en)
         header_right = "शिवांश ॲस्ट्रो-वास्तू — बृहत् कुंडली"
-        footer_brand = brand.get("kendra_name") or "शिवांश ॲस्ट्रो-वास्तू (Shivansh Astro-Vastu)"
+        footer_brand = brand.get("kendra_name") or "वास्तुसौख्यम् कन्सलटन्सी"
         footer_tag = "वैदिक, कृष्णमूर्ती (के.पी.) व लाल किताब १९५२ संहिता"
         footer_print = f"मुद्रण दिनांक: {brand.get('printed_at', '')} | पृष्ठ क्रमांक __PAGE_NUM__ of __TOTAL_PAGES__"
     elif lang == "hi":
         title_str = title_hi if title_hi else title_en
-        header_right = "शिवांश ॲस्ट्रो-वास्तू — बृहत् कुंडली"
-        footer_brand = brand.get("kendra_name") or "शिवांश ॲस्ट्रो-वास्तू (Shivansh Astro-Vastu)"
+        header_right = f"{brand.get('kendra_name') or 'वास्तुसौख्यम् कन्सलटन्सी'} — बृहत् कुंडली"
+        footer_brand = brand.get("kendra_name") or "वास्तुसौख्यम् कन्सलटन्सी"
         footer_tag = brand.get("tagline_hi", "वैदिक, कृष्णमूर्ति एवं लाल किताब संहिता")
         footer_print = f"मुद्रण तिथि: {brand.get('printed_at', '')} | पृष्ठ संख्या __PAGE_NUM__ of __TOTAL_PAGES__"
     elif lang in ("both", "bilingual"):
         title_str = f"{title_en} / {to_marathi(title_hi)}" if title_hi else title_en
-        header_right = "शिवांश ॲस्ट्रो-वास्तू (Shivansh Astro-Vastu) — बृहत् कुंडली"
-        footer_brand = brand.get("kendra_name") or brand.get("name_en", "Shivansh Astro-Vastu")
+        header_right = f"{brand.get('kendra_name') or 'वास्तुसौख्यम् कन्सलटन्सी'} — बृहत् कुंडली"
+        footer_brand = brand.get("kendra_name") or brand.get("name_en", "वास्तुसौख्यम् कन्सलटन्सी")
         footer_tag = brand.get("tagline_en", "Ancient Vedic, KP &amp; Lal Kitab Samhita")
         footer_print = f"Printing Date: {brand.get('printed_at', '')} | Page No. __PAGE_NUM__ of __TOTAL_PAGES__"
     else:
         title_str = title_en
-        header_right = "Shivansh Astro-Vastu — Brihat Kundli"
-        footer_brand = brand.get("kendra_name") or brand.get("name_en", "Shivansh Astro-Vastu")
+        header_right = f"{brand.get('kendra_name') or 'वास्तुसौख्यम् कन्सलटन्सी'} — Brihat Kundli"
+        footer_brand = brand.get("kendra_name") or brand.get("name_en", "वास्तुसौख्यम् कन्सलटन्सी")
         footer_tag = brand.get("tagline_en", "Ancient Vedic, KP &amp; Lal Kitab Samhita")
         footer_print = f"Printing Date: {brand.get('printed_at', '')} | Page No. __PAGE_NUM__ of __TOTAL_PAGES__"
 
     title_banner = f'<div class="section-title">|| {title_str} ||</div>' if title_str else ""
-    astro_name = brand.get("astrologer_name") or "Mayur Mandhare (BE.E&TC)"
-    astro_phone = brand.get("phone") or "9373058052"
+    astro_name = brand.get("astrologer_name") or "Vedic Astrologer"
+    astro_phone = brand.get("phone") or "9657196366"
     contact_chip = f"📞 {astro_phone} &nbsp;&bull;&nbsp; {astro_name}" if astro_phone else astro_name
 
     return f"""
@@ -257,7 +267,7 @@ RASHI_GUIDE_DATA = {
 
 from engine.marathi_engine import to_marathi, RASHI_NAMES_MR, GRAHA_NAMES_MR, to_marathi_with_hindi
 
-def build_full_56_page_html(data: dict, lang: str = "mr", package: str = "maha", selected_pages: list | None = None) -> str:
+def build_full_56_page_html(data: dict, lang: str = "mr", package: str = "maha", selected_pages: list | None = None, pdf_bg_theme: str | None = None) -> str:
     """
     Build the complete 56-page Gurukulam Kundli HTML report.
     `lang`: 'gu' (Gujarati), 'en' (English), 'both' (Bilingual Gujarati+English), or 'hi' (Hindi).
@@ -329,22 +339,28 @@ def build_full_56_page_html(data: dict, lang: str = "mr", package: str = "maha",
     cover_svg = render_gurukulam_cover_svg(d1_chart["lagna_sign"], d1_chart["house_planets"])
     shloka_text = T("॥ SRI GANESHAYA NAMAHA ॥", "॥ श्री गणेशाय नमः ॥ &nbsp;•&nbsp; ॥ श्री स्वामी समर्थ प्रसन्न ॥ &nbsp;•&nbsp; ॥ ॐ नमो भगवते वासुदेवाय ॥") if is_mr else T("॥ SRI GANESHAYA NAMAHA ॥", "॥ श्री गणेशाय नमः ॥ &nbsp;•&nbsp; ॥ ॐ नमो भगवते वासुदेवाय ॥")
     verse_text = """आदित्यचन्द्रावनिलोऽनलश्च द्यौर्भूमिरापो हृदयं यमश्च ।<br/>अहश्च रात्रिश्च उभे च सन्ध्ये धर्मोअपि जानाति नरस्य वृत्तम् ॥"""
-    brand_sub_name = "शिवांश ॲस्ट्रो-वास्तू (महाराष्ट्रियन मराठी आवृत्ती)" if is_mr else brand.get("name_hi", "शिवांश ॲस्ट्रो-वास्तू (Shivansh Astro-Vastu)")
+    kendra_name_val = brand.get("kendra_name") or brand.get("name_en") or "वास्तुसौख्यम् कन्सलटन्सी"
+    brand_sub_name = f"{kendra_name_val} (महाराष्ट्रियन मराठी आवृत्ती)" if is_mr else brand.get("name_hi", f"{kendra_name_val} (Vastusaukhyam Consultancy)")
+    ganesha_emblem = GANESHA_BASE64 or get_image_base64("ganesha_circular.png") or get_image_base64("ganesha.png")
+    cover_logo = brand.get("logo_data") or SHIVANSH_LOGO_BASE64 or get_image_base64("opt_shivansh_logo.jpg")
     p1_html = f"""
     <div class="kundli-page cover-page">
       <div class="cover-border-outer">
         <div class="cover-border-inner">
+          <div style="text-align:center; margin-top:2px; margin-bottom:8px;">
+            <img src="{ganesha_emblem}" style="width:72px; height:72px; border-radius:50%; border:2.5px solid #D4AF37; box-shadow:0 4px 16px rgba(212,175,55,0.45); object-fit:cover; background:#fff;" alt="॥ श्री गणेशाय नमः ॥"/>
+          </div>
           <div class="cover-shloka">{shloka_text}</div>
           <div class="cover-sanskrit-verse">
             {verse_text}
           </div>
-          <div class="cover-emblem" style="text-align:center; margin:14px 0 10px 0;">
-            <img src="{brand.get('logo_data') or get_image_base64('opt_shivansh_logo.jpg')}" style="width:215px; height:215px; border-radius:50%; box-shadow:0 6px 25px rgba(124,45,18,0.35); border:3px solid #D4AF37; object-fit:cover;" alt="Shivansh Astro-Vastu Logo"/>
+          <div class="cover-emblem" style="text-align:center; margin:10px 0 8px 0;">
+            <img src="{cover_logo}" style="width:205px; height:205px; border-radius:50%; box-shadow:0 6px 25px rgba(124,45,18,0.35); border:3px solid #D4AF37; object-fit:cover;" alt="{kendra_name_val} Logo"/>
           </div>
-          <div class="cover-brand-title" style="font-size:32px; letter-spacing:3px;">{(brand.get("kendra_name") or brand.get("name_en", "SHIVANSH ASTRO-VASTU")).upper()}</div>
+          <div class="cover-brand-title" style="font-size:30px; letter-spacing:2px;">{kendra_name_val.upper()}</div>
           <div class="cover-brand-hindi">{brand_sub_name}</div>
           <div class="cover-astrologer-meta" style="font-size:15px; color:#c59b27; margin: 6px 0 3px; font-weight:bold;">
-            Consulting Astrologer: {brand.get("astrologer_name") or "Mayur Mandhare (BE.E&TC)"} &nbsp;&bull;&nbsp; 📞 {brand.get("phone") or "9373058052"}
+            Consulting Astrologer: {brand.get("astrologer_name") or "Vedic Astrologer"} &nbsp;&bull;&nbsp; 📞 {brand.get("phone") or "9657196366"}
           </div>
           <div class="cover-tagline">{brand.get("tagline_en", "Brihat Parashari • KP Nakshatra Nadi • Asli Lal Kitab • Tajika Varshaphal")}</div>
 
@@ -2182,7 +2198,79 @@ def build_full_56_page_html(data: dict, lang: str = "mr", package: str = "maha",
 
 
     # Assemble complete HTML with Modern Royal Vedic Glassmorphism Theme
-    css = """
+    # Determine active PDF background theme
+    active_theme = (pdf_bg_theme or brand.get("pdf_background") or "parchment").lower().strip()
+    if active_theme in ("pure_white", "white", "print"):
+        bg_page = "#FFFFFF"
+        bg_body = "#F3F4F6"
+        border_page = "1px solid #D1D5DB"
+        cover_bg = "#FFFFFF"
+    elif active_theme in ("royal_gold", "gold", "golden"):
+        bg_page = "linear-gradient(180deg, #FFFDF0 0%, #FEF9DB 100%)"
+        bg_body = "radial-gradient(circle, #FEF08A 0%, #E8DFD8 90%)"
+        border_page = "1.5px solid rgba(217, 119, 6, 0.45)"
+        cover_bg = """
+            radial-gradient(circle at 50% 15%, rgba(254, 240, 138, 0.8) 0%, rgba(255, 251, 235, 0.5) 50%, transparent 80%),
+            linear-gradient(135deg, #FEF9C3 0%, #FEF08A 100%)
+        """
+    elif active_theme in ("maroon_tint", "maroon", "vastu"):
+        bg_page = "linear-gradient(180deg, #FFFBFB 0%, #FDF2F4 100%)"
+        bg_body = "radial-gradient(circle, #FFE4E6 0%, #E8DFD8 90%)"
+        border_page = "1.5px solid rgba(190, 24, 93, 0.35)"
+        cover_bg = """
+            radial-gradient(circle at 50% 15%, rgba(254, 205, 211, 0.7) 0%, rgba(255, 241, 242, 0.4) 50%, transparent 80%),
+            linear-gradient(135deg, #FFF1F2 0%, #FFE4E6 100%)
+        """
+    else:  # parchment (default)
+        bg_page = "rgba(255, 253, 249, 0.95)"
+        bg_body = "radial-gradient(circle at 10% 20%, #F5EFEB 0%, #E8DFD8 90%)"
+        border_page = "1.5px solid rgba(194, 65, 12, 0.28)"
+        cover_bg = """
+            radial-gradient(circle at 50% 15%, rgba(254, 240, 138, 0.6) 0%, rgba(255, 251, 235, 0.3) 50%, transparent 80%),
+            radial-gradient(circle at 80% 85%, rgba(251, 146, 60, 0.25) 0%, transparent 60%),
+            radial-gradient(circle at 15% 75%, rgba(217, 119, 6, 0.2) 0%, transparent 60%),
+            linear-gradient(135deg, #FFFDF9 0%, #FEF9EE 100%)
+        """
+
+    theme_vars = f"""
+    :root {{
+      --pdf-page-bg: {bg_page};
+      --pdf-body-bg: {bg_body};
+      --pdf-page-border: {border_page};
+      --pdf-cover-bg: {cover_bg};
+    }}
+    body {{
+      background: var(--pdf-body-bg) !important;
+    }}
+    .kundli-page {{
+      background: var(--pdf-page-bg) !important;
+      border: var(--pdf-page-border) !important;
+    }}
+    .cover-page {{
+      background: var(--pdf-cover-bg) !important;
+    }}
+    @media print {{
+      body {{ background: #FFFFFF !important; }}
+      .kundli-page {{
+        margin: 0 auto;
+        box-shadow: none;
+        border-radius: 0;
+        border: var(--pdf-page-border) !important;
+        background: var(--pdf-page-bg) !important;
+        height: 284mm;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }}
+      .cover-page {{
+        background: var(--pdf-cover-bg) !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }}
+      .no-print {{ display: none !important; }}
+    }}
+    """
+
+    css = theme_vars + """
     @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&family=Rasa:wght@500;600;700&display=swap');
 
     @page {
@@ -2193,7 +2281,6 @@ def build_full_56_page_html(data: dict, lang: str = "mr", package: str = "maha",
     body {
       margin: 0;
       padding: 0;
-      background: radial-gradient(circle at 10% 20%, #F5EFEB 0%, #E8DFD8 90%);
       color: #1F1B16;
       font-family: 'Plus Jakarta Sans', 'Noto Sans Devanagari', 'Rasa', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Mangal', 'Kokila', sans-serif;
       font-size: 10.6px;
@@ -2205,10 +2292,8 @@ def build_full_56_page_html(data: dict, lang: str = "mr", package: str = "maha",
       min-height: 284mm;
       max-height: 284mm;
       margin: 12px auto;
-      background: rgba(255, 253, 249, 0.88);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
-      border: 1.5px solid rgba(194, 65, 12, 0.28);
       border-radius: 14px;
       box-shadow: 
         0 12px 34px -8px rgba(124, 45, 18, 0.12),
@@ -2223,19 +2308,7 @@ def build_full_56_page_html(data: dict, lang: str = "mr", package: str = "maha",
       overflow: hidden;
       position: relative;
     }
-    @media print {
-      body { background: #FFFFFF; }
-      .kundli-page {
-        margin: 0 auto;
-        box-shadow: none;
-        border-radius: 0;
-        border: 1px solid #7C2D12;
-        background: #FFFFFF;
-        height: 284mm;
-      }
-      .no-print { display: none !important; }
-    }
-    @media screen and (max-width: 800px) {
+        @media screen and (max-width: 800px) {
       body {
         padding: 4px 2px !important;
         background: #F5EFEB !important;
