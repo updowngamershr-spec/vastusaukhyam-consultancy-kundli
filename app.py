@@ -805,13 +805,6 @@ def api_export_pdf(req: KundliRequest):
             data["brand"]["custom_bg_data"] = brand_cfg["custom_bg_data"]
         if brand_cfg.get("logo_data"):
             data["brand"]["logo_data"] = brand_cfg["logo_data"]
-    active_pdf_bg = req.pdf_background or (brand_cfg.get("pdf_background") if brand_cfg else None) or "parchment" 
-        if brand_cfg.get("pdf_background"):
-            data["brand"]["pdf_background"] = brand_cfg["pdf_background"]
-        if brand_cfg.get("custom_bg_data"):
-            data["brand"]["custom_bg_data"] = brand_cfg["custom_bg_data"]
-        if brand_cfg.get("logo_data"):
-            data["brand"]["logo_data"] = brand_cfg["logo_data"]
     active_pdf_bg = req.pdf_background or (brand_cfg.get("pdf_background") if brand_cfg else None) or "parchment"
     html_str = build_full_56_page_html(data, lang=req.lang, package=req.report_package, selected_pages=req.selected_pages, pdf_bg_theme=active_pdf_bg)
     safe_name = make_safe_filename(req.name)
