@@ -132,7 +132,7 @@ def init_crm_db():
     cur.execute("""
         CREATE TABLE IF NOT EXISTS branding (
             id INTEGER PRIMARY KEY,
-            astrologer_name TEXT DEFAULT 'Vedic Astrologer',
+            astrologer_name TEXT DEFAULT 'डॉ. महेशकुमार सुमंत कुलकर्णी (MA.BEd)',
             kendra_name TEXT DEFAULT 'वास्तुसौख्यम् कन्सलटन्सी',
             phone TEXT DEFAULT '9657196366',
             email TEXT DEFAULT '',
@@ -222,6 +222,8 @@ def get_branding():
     conn.close()
     if row:
         d = dict(row)
+        if not d.get("astrologer_name") or d.get("astrologer_name") in ("Hrmmn", "Harman", "Vedic Astrologer", "Mayur Mandhare (BE.E&TC)"):
+            d["astrologer_name"] = "डॉ. महेशकुमार सुमंत कुलकर्णी (MA.BEd)"
         if not d.get("pdf_background"):
             d["pdf_background"] = "parchment"
         if not d.get("kendra_name") or d.get("kendra_name") == "Shivansh Astro-Vastu":
@@ -240,7 +242,7 @@ def get_branding():
                 pass
         return d
     return {
-        "astrologer_name": "Vedic Astrologer",
+        "astrologer_name": "डॉ. महेशकुमार सुमंत कुलकर्णी (MA.BEd)",
         "kendra_name": "वास्तुसौख्यम् कन्सलटन्सी",
         "phone": "9657196366",
         "email": "",
@@ -276,7 +278,7 @@ def save_branding(data: dict):
             custom_banner_data=excluded.custom_banner_data,
             updated_at=excluded.updated_at
     """, (
-        data.get("astrologer_name", "Vedic Astrologer"),
+        data.get("astrologer_name", "डॉ. महेशकुमार सुमंत कुलकर्णी (MA.BEd)"),
         data.get("kendra_name", "वास्तुसौख्यम् कन्सलटन्सी"),
         data.get("phone", "9657196366"),
         data.get("email", ""),

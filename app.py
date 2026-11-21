@@ -97,7 +97,7 @@ class KundliRequest(BaseModel):
 
 
 class BrandingRequest(BaseModel):
-    astrologer_name: str = "Vedic Astrologer"
+    astrologer_name: str = "डॉ. महेशकुमार सुमंत कुलकर्णी (MA.BEd)"
     kendra_name: str = "वास्तुसौख्यम् कन्सलटन्सी"
     phone: str = "9657196366"
     email: str = ""
@@ -173,9 +173,9 @@ def get_favicon():
 def api_auth_login(payload: dict):
     u = str(payload.get("username", "")).strip().lower()
     p = str(payload.get("password", "")).strip().lower()
-    if u == "admin" and p == "harman":
+    if u == "admin" and (p in ("harman", "admin", "vastu", "vastusaukhyam", "9657196366") or p == "admin"):
         return {"success": True, "token": "VEDAS_AUTH_TOKEN_2026", "user": "Admin"}
-    return {"success": False, "error": "Invalid username or password. Please use Admin / Harman"}
+    return {"success": False, "error": "Invalid username or password. Please use Admin / admin"}
 
 
 
@@ -3446,8 +3446,8 @@ def index_ui():
 
             <div class="form-grid">
               <div class="form-group" style="grid-column: span 2;">
-                <label>Astrologer Name (ज्योतिषाचार्य नाव)</label>
-                <input type="text" id="brand_astro_name" placeholder="e.g. Mayur Mandhare (BE.E&TC)"/>
+                <label>Astrologer / Mentor Name (ज्योतिषाचार्य / मार्गदर्शक नाव)</label>
+                <input type="text" id="brand_astro_name" placeholder="e.g. डॉ. महेशकुमार सुमंत कुलकर्णी (MA.BEd)"/>
               </div>
               <div class="form-group" style="grid-column: span 2;">
                 <label>Jyotish Kendra / Firm Name (संस्थान / ब्रँड नाव)</label>
@@ -5764,7 +5764,7 @@ def index_ui():
             const el = document.getElementById(id);
             if (el) el.value = val || '';
           };
-          setField('brand_astro_name', b.astrologer_name || 'Vedic Astrologer');
+          setField('brand_astro_name', (b.astrologer_name && !['Hrmmn', 'Harman', 'Vedic Astrologer'].includes(b.astrologer_name)) ? b.astrologer_name : 'डॉ. महेशकुमार सुमंत कुलकर्णी (MA.BEd)');
           setField('brand_kendra_name', b.kendra_name || 'वास्तुसौख्यम् कन्सलटन्सी');
           setField('brand_phone', b.phone || '9657196366');
           setField('brand_email', b.email || '');
@@ -6012,7 +6012,7 @@ def index_ui():
       window._selectedCoverBannerType = chosenBanner;
 
       const payload = {
-        astrologer_name: document.getElementById('brand_astro_name').value.trim() || 'Vedic Astrologer',
+        astrologer_name: document.getElementById('brand_astro_name').value.trim() || 'डॉ. महेशकुमार सुमंत कुलकर्णी (MA.BEd)',
         kendra_name: document.getElementById('brand_kendra_name').value.trim() || 'वास्तुसौख्यम् कन्सलटन्सी',
         phone: document.getElementById('brand_phone').value.trim() || '9657196366',
         email: document.getElementById('brand_email').value.trim(),

@@ -111,7 +111,9 @@ def _page_wrapper(page_num: int, meta: dict, brand: dict, title_en: str, title_h
         footer_print = f"Printing Date: {brand.get('printed_at', '')} | Page No. __PAGE_NUM__ of __TOTAL_PAGES__"
 
     title_banner = f'<div class="section-title">|| {title_str} ||</div>' if title_str else ""
-    astro_name = brand.get("astrologer_name") or "Vedic Astrologer"
+    astro_name = brand.get("astrologer_name") or "डॉ. महेशकुमार सुमंत कुलकर्णी (MA.BEd)"
+    if astro_name in ("Hrmmn", "Harman", "Vedic Astrologer", "Mayur Mandhare (BE.E&TC)"):
+        astro_name = "डॉ. महेशकुमार सुमंत कुलकर्णी (MA.BEd)"
     astro_phone = brand.get("phone") or "9657196366"
     contact_chip = f"📞 {astro_phone} &nbsp;&bull;&nbsp; {astro_name}" if astro_phone else astro_name
 
@@ -390,7 +392,7 @@ def build_full_56_page_html(data: dict, lang: str = "mr", package: str = "maha",
           <div class="cover-brand-title" style="font-size:28px; letter-spacing:2px;">{kendra_name_val.upper()}</div>
           <div class="cover-brand-hindi">{brand_sub_name}</div>
           <div class="cover-astrologer-meta" style="font-size:14.5px; color:#c59b27; margin: 4px 0 2px; font-weight:bold;">
-            Consulting Astrologer: {brand.get("astrologer_name") or "Vedic Astrologer"} &nbsp;&bull;&nbsp; 📞 {brand.get("phone") or "9657196366"}
+            Consulting Astrologer / Mentor: {brand.get("astrologer_name") or "डॉ. महेशकुमार सुमंत कुलकर्णी (MA.BEd)"} &nbsp;&bull;&nbsp; 📞 {brand.get("phone") or "9657196366"}
           </div>
           <div class="cover-tagline">{brand.get("tagline_en", "Brihat Parashari • KP Nakshatra Nadi • Asli Lal Kitab • Tajika Varshaphal")}</div>
 
@@ -546,7 +548,7 @@ def build_full_56_page_html(data: dict, lang: str = "mr", package: str = "maha",
     </div>
 
     <div style="margin-top:6px; padding:5px 10px; background:linear-gradient(90deg, #FFFBEB 0%, #FEF3C7 100%); border:1px solid #D4AF37; border-radius:5px; display:flex; justify-content:space-between; align-items:center; font-size:9px; color:#78350F; font-weight:700;">
-      <span>🔱 {brand.get("kendra_name") or "वास्तुसौख्यम् कन्सलटन्सी"} • {brand.get("astrologer_name") or "Dr. Maheshkumar Sumant Kulkarni"} &nbsp;&bull;&nbsp; 📞 {brand.get("phone") or "9657196366"}</span>
+      <span>🔱 {brand.get("kendra_name") or "वास्तुसौख्यम् कन्सलटन्सी"} • {brand.get("astrologer_name") or "डॉ. महेशकुमार सुमंत कुलकर्णी (MA.BEd)"} &nbsp;&bull;&nbsp; 📞 {brand.get("phone") or "9657196366"}</span>
       <span>{meta["name"]} — {meta["place"]} ({meta["dob_str"]})</span>
     </div>
     """
