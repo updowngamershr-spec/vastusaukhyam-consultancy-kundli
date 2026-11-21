@@ -13,6 +13,7 @@ from datetime import datetime
 def get_user_data_root() -> str:
     """Return standard writable user data directory with graceful fallbacks."""
     candidates = [
+        os.path.join(os.environ.get("LOCALAPPDATA", ""), "VastusaukhyamAstro"),
         os.path.join(os.environ.get("LOCALAPPDATA", ""), "ShivanshAstroVastu"),
         os.path.join(os.path.expanduser("~"), ".vedaskundli"),
         os.path.join(tempfile.gettempdir(), "ShivanshAstroVastu"),
@@ -39,6 +40,15 @@ def _get_db_path() -> str:
     user_db_dir = os.path.join(user_root, "data")
     os.makedirs(user_db_dir, exist_ok=True)
     user_db = os.path.join(user_db_dir, "gurukulam_crm.db")
+
+    # Migrate from old ShivanshAstroVastu folder if it exists
+    old_shivansh_db = os.path.join(os.environ.get("LOCALAPPDATA", ""), "ShivanshAstroVastu", "data", "gurukulam_crm.db")
+    if os.path.exists(old_shivansh_db) and not os.path.exists(user_db):
+        try:
+            import shutil
+            shutil.copy2(old_shivansh_db, user_db)
+        except Exception:
+            pass
 
     # Migrate local database if it exists and user_db doesn't exist yet
     base_dir = os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else os.path.dirname(os.path.abspath(__file__))
@@ -206,6 +216,12 @@ def get_branding():
             d["kendra_name"] = "वास्तुसौख्यम् कन्सलटन्सी"
         if not d.get("phone") or d.get("phone") == "9373058052":
             d["phone"] = "9657196366"
+        if not d.get("logo_data"):
+            try:
+                from engine._logo_b64 import VASTUSAUKHYAM_LOGO_BASE64
+                d["logo_data"] = VASTUSAUKHYAM_LOGO_BASE64
+            except Exception:
+                pass
         return d
     return {
         "astrologer_name": "Vedic Astrologer",

@@ -1,7 +1,7 @@
 from datetime import datetime
 # -*- coding: utf-8 -*-
 """
-Shivansh Astro-Vastu - Complete Desktop Astrological Suite & High-Resolution Vector PDF Server
+वास्तुसौख्यम् कन्सलटन्सी - Complete Desktop Astrological Suite & High-Resolution Vector PDF Server
 Features:
 - Master Security Access / Login Gateway (User: Admin, Pass: Harman)
 - High-Performance Offline Desktop Suite
@@ -36,7 +36,7 @@ from engine.kundli_milan import calculate_ashtakoot_milan
 from engine.milan_dossier import build_milan_dossier_html
 from crm_db import init_crm_db, list_clients, get_client, save_client, delete_client, get_branding, save_branding, get_user_data_root, create_demo_key, list_demo_keys, toggle_demo_key_status, validate_access_key
 
-app = FastAPI(title="Shivansh Astro-Vastu")
+app = FastAPI(title="वास्तुसौख्यम् कन्सलटन्सी")
 
 from fastapi.staticfiles import StaticFiles
 assets_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
@@ -688,7 +688,7 @@ def api_export_milan_person_pdf(person: MilanPerson, lang: str = "hi"):
     )
     html_str = build_full_56_page_html(data, lang=lang)
     safe_name = make_safe_filename(person.name)
-    pdf_filename = f"Shivansh_Astro_Vastu_{safe_name}_{lang.upper()}.pdf"
+    pdf_filename = f"Vastusaukhyam_Kundli_{safe_name}_{lang.upper()}.pdf"
     pdf_path = os.path.join(REPORTS_DIR, pdf_filename)
     res = export_html_to_pdf(html_str, pdf_path, split_single_pages=False)
     if res["success"]:
@@ -754,7 +754,7 @@ def prompt_user_native_dialog(pdf_path):
             f"• [No] वर क्लिक करा -> डाऊनलोड फोल्डर उघडण्यासाठी (Open Downloads Folder)\n"
             f"• [Cancel] -> बंद करा (Close)"
         )
-        title = "Shivansh Astro-Vastu — PDF डाऊनलोड यशस्वी!"
+        title = "वास्तुसौख्यम् कन्सलटन्सी — PDF डाऊनलोड यशस्वी!"
         
         res = ctypes.windll.user32.MessageBoxW(0, msg, title, MB_YESNOCANCEL | MB_ICONINFORMATION | MB_TOPMOST)
         if res == 6:  # IDYES
@@ -2229,7 +2229,7 @@ def index_ui():
         ॥ श्री गणेशाय नमः ॥
       </div>
       <h2 style="font-family: 'Cinzel', serif; font-size: 20px; font-weight: 900; color: #7C2D12; margin: 0 0 4px 0; letter-spacing: 1px;">
-        SHIVANSH ASTRO-VASTU PROFESSIONAL
+        वास्तुसौख्यम् कन्सलटन्सी
       </h2>
       <div style="font-size: 11.5px; color: #6B7280; font-weight: 600; margin-bottom: 18px;">
         Master Security Access • Astrologer Login
@@ -2324,7 +2324,7 @@ def index_ui():
       </div>
 
       <div style="font-size: 10.5px; color: #9CA3AF; margin-top: 14px;">
-        Shivansh Astro-Vastu Professional • 100% Offline Standalone Protection
+        वास्तुसौख्यम् कन्सलटन्सी • 100% Offline Standalone Edition
       </div>
     </div>
   </div>
@@ -2336,7 +2336,7 @@ def index_ui():
     <aside class="desktop-sidebar">
       <div>
         <div class="sidebar-brand" style="display:flex; align-items:center; gap:8px;">
-          <img src="/assets/images/opt_shivansh_logo.jpg" style="width:42px; height:42px; border-radius:50%; border:2px solid #D4AF37; box-shadow:0 2px 6px rgba(124,45,18,0.3); object-fit:cover;" alt="Shivansh Logo"/>
+          <img src="/assets/images/vastusaukhyam_logo.jpg" style="width:42px; height:42px; border-radius:50%; border:2px solid #D4AF37; box-shadow:0 2px 6px rgba(124,45,18,0.3); object-fit:cover;" alt="Shivansh Logo"/>
           <div class="brand-text">
             <div class="title" style="font-size:13px; font-weight:900; letter-spacing:0.3px;">वास्तुसौख्यम्</div>
             <div class="sub" style="font-size:10px; color:#FDE68A;">कन्सलटन्सी • Astro-Vastu</div>
@@ -2541,11 +2541,11 @@ def index_ui():
                 </thead>
                 <tbody id="dashRecentReportsBody">
                   <tr>
-                    <td style="font-weight:700; color:#1E3A8A;">Shivansh_Kundli_Rajesh_Joshi_VIP.pdf</td>
+                    <td style="font-weight:700; color:#1E3A8A;">Vastusaukhyam_Kundli_Rajesh_Joshi_VIP.pdf</td>
                     <td>48.41 MB</td>
                     <td style="font-size:11.5px; color:#6B7280;">01 Nov 2026, 10:00 PM</td>
                     <td>
-                      <a href="/api/download-pdf/Shivansh_Kundli_Rajesh_Joshi_VIP.pdf" target="_blank" class="btn-table-action" style="text-decoration:none; display:inline-block;">📥 PDF डाउनलोड</a>
+                      <a href="/api/download-pdf/Vastusaukhyam_Kundli_Rajesh_Joshi_VIP.pdf" target="_blank" class="btn-table-action" style="text-decoration:none; display:inline-block;">📥 PDF डाउनलोड</a>
                     </td>
                   </tr>
                 </tbody>
@@ -3320,7 +3320,7 @@ def index_ui():
 
             <!-- DIRECT FULL PDF PREVIEW CONTAINER -->
             <div style="width:100%; border-radius:12px; overflow:hidden; box-shadow:0 6px 24px rgba(124,45,18,0.12); margin-bottom:14px; background:#F5EFEB;">
-              <iframe id="reportFrame" title="Shivansh Astro-Vastu Full Report Preview" style="width:100%; height:78vh; min-height:560px; border:1.5px solid #D4AF37; border-radius:12px; background:#FFFFFF; display:block;"></iframe>
+              <iframe id="reportFrame" title="वास्तुसौख्यम् कन्सलटन्सी Full Report Preview" style="width:100%; height:78vh; min-height:560px; border:1.5px solid #D4AF37; border-radius:12px; background:#FFFFFF; display:block;"></iframe>
             </div>
 
             <!-- Package fallback (hidden or sync) -->
@@ -3413,7 +3413,7 @@ def index_ui():
             <!-- LOGO CUSTOMIZER BOX -->
             <div style="display:flex; align-items:center; gap:20px; background:#FEF3C7; border:1.5px solid #FDE68A; padding:14px; border-radius:10px; margin-bottom:18px;">
               <div style="text-align:center;">
-                <img id="brand_logo_preview" src="/assets/images/opt_shivansh_logo.jpg" style="width:110px; height:110px; border-radius:50%; border:3px solid #D4AF37; object-fit:cover; box-shadow:0 4px 14px rgba(124,45,18,0.25); background:#fff;"/>
+                <img id="brand_logo_preview" src="/assets/images/vastusaukhyam_logo.jpg" style="width:110px; height:110px; border-radius:50%; border:3px solid #D4AF37; object-fit:cover; box-shadow:0 4px 14px rgba(124,45,18,0.25); background:#fff;"/>
                 <div style="font-size:10px; color:#78350F; font-weight:700; margin-top:4px;">सध्याचा लोगो (Current Logo)</div>
               </div>
               <div style="flex:1;">
@@ -3441,7 +3441,7 @@ def index_ui():
               </div>
               <div class="form-group" style="grid-column: span 2;">
                 <label>Jyotish Kendra / Firm Name (संस्थान / ब्रँड नाव)</label>
-                <input type="text" id="brand_kendra_name" placeholder="e.g. Shivansh Astro-Vastu"/>
+                <input type="text" id="brand_kendra_name" placeholder="e.g. वास्तुसौख्यम् कन्सलटन्सी"/>
               </div>
             </div>
 
@@ -3452,7 +3452,7 @@ def index_ui():
               </div>
               <div class="form-group">
                 <label>ईमेल पत्ता (Email Address)</label>
-                <input type="email" id="brand_email" placeholder="e.g. consult@shivanshastrovastu.com"/>
+                <input type="email" id="brand_email" placeholder="e.g. info@vastusaukhyam.com"/>
               </div>
             </div>
 
@@ -3692,7 +3692,7 @@ def index_ui():
         <span style="font-size: 22px; line-height: 1; margin-top: 1px;">${icon}</span>
         <div style="flex: 1; word-break: break-word;">
           <div style="font-weight: 800; color: #FDE68A; margin-bottom: 3px; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.8px;">
-            Shivansh Astro-Vastu Suite
+            वास्तुसौख्यम् कन्सलटन्सी (Vastusaukhyam Suite)
           </div>
           <div style="color: #F9FAFB; font-size: 13px; font-weight: 500;">
             ${strMsg.split(String.fromCharCode(10)).join('<br/>')}
@@ -3836,7 +3836,7 @@ def index_ui():
           'settings': '⚙️ ज्योतिष केंद्र ब्रँडिंग सेटिंग्ज (Settings)'
         };
         const titleEl = document.getElementById('topbarTitle');
-        if (titleEl) titleEl.innerHTML = titles[viewId] || 'Shivansh Astro-Vastu';
+        if (titleEl) titleEl.innerHTML = titles[viewId] || 'वास्तुसौख्यम् कन्सलटन्सी';
 
         if (viewId === 'dashboard') loadDashboard();
         if (viewId === 'new_kundli') resetNewKundliForm();
@@ -3849,7 +3849,7 @@ def index_ui():
     }
 
     function closeDesktopApp() {
-      if (confirm('Are you sure you want to exit Shivansh Astro-Vastu?')) {
+      if (confirm('Are you sure you want to exit वास्तुसौख्यम् कन्सलटन्सी?')) {
         fetch('/api/shutdown', {method: 'POST'}).catch(()=>{});
         window.close();
       }
@@ -5692,7 +5692,7 @@ def index_ui():
 
     function shareOnWhatsApp() {
       const p = getFormPayload();
-      const txt = `*SHIVANSH ASTRO-VASTU REPORT*\nName: ${p.name}\nDOB: ${p.day}/${p.month}/${p.year}\nTime: ${p.hour}:${p.minute}\nPlace: ${p.place}\nConsultation Category: ${p.category}\n-- Generated via Shivansh Astro-Vastu Suite`;
+      const txt = `*SHIVANSH ASTRO-VASTU REPORT*\nName: ${p.name}\nDOB: ${p.day}/${p.month}/${p.year}\nTime: ${p.hour}:${p.minute}\nPlace: ${p.place}\nConsultation Category: ${p.category}\n-- Generated via वास्तुसौख्यम् कन्सलटन्सी (Vastusaukhyam Suite)`;
       window.open('https://api.whatsapp.com/send?text=' + encodeURIComponent(txt), '_blank');
     }
 
@@ -5740,7 +5740,7 @@ def index_ui():
             if (preview) preview.src = b.logo_data;
             if (logoInput) logoInput.value = b.logo_data;
           } else {
-            if (preview) preview.src = '/assets/images/opt_shivansh_logo.jpg?t=' + Date.now();
+            if (preview) preview.src = '/assets/images/vastusaukhyam_logo.jpg?t=' + Date.now();
             if (logoInput) logoInput.value = '';
           }
         }
@@ -5774,7 +5774,7 @@ def index_ui():
     function resetDefaultLogo() {
       const preview = document.getElementById('brand_logo_preview');
       const logoInput = document.getElementById('brand_logo_data');
-      if (preview) preview.src = '/assets/images/opt_shivansh_logo.jpg?t=' + Date.now();
+      if (preview) preview.src = '/assets/images/vastusaukhyam_logo.jpg?t=' + Date.now();
       if (logoInput) logoInput.value = '';
     }
 
@@ -6240,7 +6240,7 @@ def index_ui():
         { p: 55, t: '🪐 Loading Classical Parashari Shodashvarga & KP Cuspal Engine...' },
         { p: 80, t: '📖 Loading Lal Kitab 1952 Remedial & Ancestral Knowledgebase...' },
         { p: 95, t: '👥 Connecting Client CRM & VIP Vector Report Studio...' },
-        { p: 100, t: '✨ Ready • Welcome to Shivansh Astro-Vastu Professional!' }
+        { p: 100, t: '✨ Ready • Welcome to वास्तुसौख्यम् कन्सलटन्सी (Vastusaukhyam Consultancy)!' }
       ];
 
       let i = 0;
@@ -6529,7 +6529,7 @@ def index_ui():
     }
 
     function initApp() {
-      console.log('[Init] Shivansh Astro-Vastu Professional starting...');
+      console.log('[Init] वास्तुसौख्यम् कन्सलटन्सी (Vastusaukhyam Consultancy) starting...');
       runSplashScreen();
       checkAuthStatus();
       loadDashboard();
@@ -6564,7 +6564,7 @@ def index_ui():
           🔥 LIMITED TIME LAUNCH DEAL
         </span>
         <h2 style="font-family:'Cinzel', serif; font-size:22px; font-weight:900; color:#FEF08A; margin:8px 0 2px 0;">
-          SHIVANSH ASTRO-VASTU PRO
+          वास्तुसौख्यम् कन्सलटन्सी
         </h2>
         <p style="font-size:12.5px; color:#D1C7BD; margin:0 0 14px 0;">
           आजीवन वीआईपी लाइसेंस (One-Time Payment • No Monthly Fees)
@@ -6632,7 +6632,7 @@ if __name__ == "__main__":
     port = find_open_port(8088)
     app_url = f"http://127.0.0.1:{port}"
     print("==================================================================")
-    print(f"  Shivansh Astro-Vastu Suite running at: {app_url}")
+    print(f"  वास्तुसौख्यम् कन्सलटन्सी (Vastusaukhyam Suite) running at: {app_url}")
     print("  Login ID: Admin | Password: Harman")
     print("==================================================================")
     Timer(1.2, lambda: webbrowser.open(app_url)).start()

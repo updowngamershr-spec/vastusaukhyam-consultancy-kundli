@@ -11,11 +11,10 @@ crm.db
 *.log
 
 scratch/
-__pycache__/
-*.pyc
-
 build/
 dist/
-
+Vastusaukhyam_Desktop_New_Build/
+reports/*.pdf
+*.lnk
 ShivanshAstroVastu/
 *.mp4

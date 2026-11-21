@@ -294,12 +294,12 @@ def generate_complete_kundli(
 
     payload = {
         "brand": {
-            "name_en": "Shivansh Astro-Vastu",
-            "name_hi": "शिवांश ॲस्ट्रो-वास्तू (Shivansh Astro-Vastu)",
-            "name_mr": "शिवांश ॲस्ट्रो-वास्तू (Shivansh Astro-Vastu)",
-            "kendra_name": "Shivansh Astro-Vastu",
+            "name_en": "Vastusaukhyam Consultancy",
+            "name_hi": "वास्तुसौख्यम् कन्सलटन्सी",
+            "name_mr": "वास्तुसौख्यम् कन्सलटन्सी",
+            "kendra_name": "वास्तुसौख्यम् कन्सलटन्सी",
             "astrologer_name": "Mayur Mandhare (BE.E&TC)",
-            "phone": "9373058052",
+            "phone": "9657196366",
             "tagline_en": "Ancient Vedic, KP & Lal Kitab Predictions",
             "tagline_hi": "प्राचीन वैदिक, कृष्णमूर्ति पद्धति एवं लाल किताब फलादेश",
             "tagline_mr": "अचूक वैदिक, कृष्णमूर्ती पद्धती आणि लाल किताब भविष्यवाणी",

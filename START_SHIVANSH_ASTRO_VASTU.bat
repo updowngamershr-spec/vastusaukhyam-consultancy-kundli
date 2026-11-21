@@ -1,31 +1,29 @@
 @echo off
-title Shivansh Astro-Vastu Professional (PC Edition)
+title वास्तुसौख्यम् कन्सलटन्सी (Vastusaukhyam Consultancy)
 cd /d "%~dp0"
 
-:: 1. Auto-unblock all downloaded files to prevent Windows Zone.Identifier restrictions
-powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-ChildItem -Path '%~dp0' -Recurse | Unblock-File -ErrorAction SilentlyContinue" 2>nul
-
-:: 2. Set Python.NET environment variables for target PC without Python installed
-if exist "%~dp0ShivanshAstroVastu\_internal\python311.dll" (
-    set "PYTHONNET_PYDLL=%~dp0ShivanshAstroVastu\_internal\python311.dll"
-    set "PYTHONNET_RUNTIME_DIR=%~dp0ShivanshAstroVastu\_internal\pythonnet\runtime"
-    set "PATH=%~dp0ShivanshAstroVastu;%~dp0ShivanshAstroVastu\_internal;%PATH%"
-) else if exist "%~dp0_internal\python311.dll" (
-    set "PYTHONNET_PYDLL=%~dp0_internal\python311.dll"
-    set "PYTHONNET_RUNTIME_DIR=%~dp0_internal\pythonnet\runtime"
-    set "PATH=%~dp0;%~dp0_internal;%PATH%"
-)
-
-:: 3. Launch the application
-if exist "%~dp0ShivanshAstroVastu\ShivanshAstroVastu.exe" (
-    cd /d "%~dp0ShivanshAstroVastu"
-    start "" "%~dp0ShivanshAstroVastu\ShivanshAstroVastu.exe"
+:: 1. Launch from Vastusaukhyam_Desktop_New_Build if it exists
+if exist "%~dp0..\Vastusaukhyam_Desktop_New_Build\VastusaukhyamAstro.exe" (
+    cd /d "%~dp0..\Vastusaukhyam_Desktop_New_Build"
+    start "" "%~dp0..\Vastusaukhyam_Desktop_New_Build\VastusaukhyamAstro.exe"
     exit
 )
 
-if exist "%~dp0dist\ShivanshAstroVastu\ShivanshAstroVastu.exe" (
-    cd /d "%~dp0dist\ShivanshAstroVastu"
-    start "" "%~dp0dist\ShivanshAstroVastu\ShivanshAstroVastu.exe"
+if exist "%~dp0dist\Vastusaukhyam_Desktop_New_Build\VastusaukhyamAstro.exe" (
+    cd /d "%~dp0dist\Vastusaukhyam_Desktop_New_Build"
+    start "" "%~dp0dist\Vastusaukhyam_Desktop_New_Build\VastusaukhyamAstro.exe"
+    exit
+)
+
+if exist "%~dp0Vastusaukhyam_Desktop_New_Build\VastusaukhyamAstro.exe" (
+    cd /d "%~dp0Vastusaukhyam_Desktop_New_Build"
+    start "" "%~dp0Vastusaukhyam_Desktop_New_Build\VastusaukhyamAstro.exe"
+    exit
+)
+
+if exist "%~dp0ShivanshAstroVastu\ShivanshAstroVastu.exe" (
+    cd /d "%~dp0ShivanshAstroVastu"
+    start "" "%~dp0ShivanshAstroVastu\ShivanshAstroVastu.exe"
     exit
 )
 
@@ -34,13 +32,12 @@ if exist "%~dp0ShivanshAstroVastu.exe" (
     exit
 )
 
-:: 4. Direct Python fallback if Python is installed
+:: Python fallback
 python --version >nul 2>&1
 if %errorlevel% equ 0 (
-    echo Launching with local Python environment...
     start "" python desktop_main.py
     exit
 )
 
-echo [ERROR] ShivanshAstroVastu.exe not found!
+echo [ERROR] Application executable not found!
 pause

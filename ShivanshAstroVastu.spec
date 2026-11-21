@@ -50,6 +50,8 @@ hidden_imports = [
     'engine.remedy_pages',
     'engine.marathi_engine',
     'engine._logo_b64',
+    'engine._ganesha_b64',
+    'engine._ganesha_landscape_b64',
     'engine.personalized_predictions',
     'engine.kp_authentic_engine',
     'engine.vastu_engine',

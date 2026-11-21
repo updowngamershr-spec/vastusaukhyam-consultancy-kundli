@@ -31,8 +31,9 @@ from engine.ephemeris import (
 import base64
 
 try:
-    from engine._logo_b64 import SHIVANSH_LOGO_BASE64
+    from engine._logo_b64 import VASTUSAUKHYAM_LOGO_BASE64, SHIVANSH_LOGO_BASE64
 except Exception:
+    VASTUSAUKHYAM_LOGO_BASE64 = ""
     SHIVANSH_LOGO_BASE64 = ""
 
 try:
@@ -51,6 +52,8 @@ def get_image_base64(fname: str) -> str:
         return GANESHA_LANDSCAPE_BASE64
     if "ganesh" in fname.lower() and GANESHA_BASE64:
         return GANESHA_BASE64
+    if VASTUSAUKHYAM_LOGO_BASE64 and ("vastu" in fname.lower() or "logo" in fname.lower()):
+        return VASTUSAUKHYAM_LOGO_BASE64
     if "logo" in fname.lower() and SHIVANSH_LOGO_BASE64:
         return SHIVANSH_LOGO_BASE64
     base_dir = getattr(sys, '_MEIPASS', os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
@@ -77,7 +80,7 @@ def _page_wrapper(page_num: int, meta: dict, brand: dict, title_en: str, title_h
     """Wrap content in a standard A4 Shivansh Astro-Vastu bordered page with header & footer."""
     if lang in ("mr", "marathi"):
         title_str = to_marathi(title_hi) if title_hi else to_marathi(title_en)
-        header_right = "शिवांश ॲस्ट्रो-वास्तू — बृहत् कुंडली"
+        header_right = f"{brand.get('kendra_name') or 'वास्तुसौख्यम् कन्सलटन्सी'} — बृहत् कुंडली"
         footer_brand = brand.get("kendra_name") or "वास्तुसौख्यम् कन्सलटन्सी"
         footer_tag = "वैदिक, कृष्णमूर्ती (के.पी.) व लाल किताब १९५२ संहिता"
         footer_print = f"मुद्रण दिनांक: {brand.get('printed_at', '')} | पृष्ठ क्रमांक __PAGE_NUM__ of __TOTAL_PAGES__"
@@ -350,24 +353,24 @@ def build_full_56_page_html(data: dict, lang: str = "mr", package: str = "maha",
     brand_sub_name = f"{kendra_name_val} (महाराष्ट्रियन मराठी आवृत्ती)" if is_mr else brand.get("name_hi", f"{kendra_name_val} (Vastusaukhyam Consultancy)")
     ganesha_emblem = GANESHA_BASE64 or get_image_base64("ganesha_circular.png") or get_image_base64("ganesha.png")
     ganesha_landscape_emblem = GANESHA_LANDSCAPE_BASE64 or get_image_base64("ganesha_landscape.jpg")
-    cover_logo = brand.get("logo_data") or SHIVANSH_LOGO_BASE64 or get_image_base64("opt_shivansh_logo.jpg")
+    cover_logo = brand.get("logo_data") or VASTUSAUKHYAM_LOGO_BASE64 or SHIVANSH_LOGO_BASE64 or get_image_base64("vastusaukhyam_logo.jpg")
     p1_html = f"""
     <div class="kundli-page cover-page">
       <div class="cover-border-outer">
         <div class="cover-border-inner">
-          <div style="text-align:center; margin-top:2px; margin-bottom:8px;">
-            <img src="{ganesha_emblem}" style="width:72px; height:72px; border-radius:50%; border:2.5px solid #D4AF37; box-shadow:0 4px 16px rgba(212,175,55,0.45); object-fit:cover; background:#fff;" alt="॥ श्री गणेशाय नमः ॥"/>
+          <div style="text-align:center; margin-top:2px; margin-bottom:6px;">
+            <img src="{ganesha_emblem}" style="width:58px; height:58px; border-radius:50%; border:2.5px solid #D4AF37; box-shadow:0 4px 16px rgba(212,175,55,0.45); object-fit:cover; background:#fff;" alt="॥ श्री गणेशाय नमः ॥"/>
           </div>
           <div class="cover-shloka">{shloka_text}</div>
           <div class="cover-sanskrit-verse">
             {verse_text}
           </div>
-          <div class="cover-emblem" style="text-align:center; margin:10px 0 8px 0;">
-            <img src="{cover_logo}" style="width:205px; height:205px; border-radius:50%; box-shadow:0 6px 25px rgba(124,45,18,0.35); border:3px solid #D4AF37; object-fit:cover;" alt="{kendra_name_val} Logo"/>
+          <div class="cover-emblem" style="text-align:center; margin:8px 0 6px 0;">
+            <img src="{cover_logo}" style="width:170px; height:170px; border-radius:50%; box-shadow:0 6px 25px rgba(124,45,18,0.35); border:3px solid #D4AF37; object-fit:cover;" alt="{kendra_name_val} Logo"/>
           </div>
-          <div class="cover-brand-title" style="font-size:30px; letter-spacing:2px;">{kendra_name_val.upper()}</div>
+          <div class="cover-brand-title" style="font-size:28px; letter-spacing:2px;">{kendra_name_val.upper()}</div>
           <div class="cover-brand-hindi">{brand_sub_name}</div>
-          <div class="cover-astrologer-meta" style="font-size:15px; color:#c59b27; margin: 6px 0 3px; font-weight:bold;">
+          <div class="cover-astrologer-meta" style="font-size:14.5px; color:#c59b27; margin: 4px 0 2px; font-weight:bold;">
             Consulting Astrologer: {brand.get("astrologer_name") or "Vedic Astrologer"} &nbsp;&bull;&nbsp; 📞 {brand.get("phone") or "9657196366"}
           </div>
           <div class="cover-tagline">{brand.get("tagline_en", "Brihat Parashari • KP Nakshatra Nadi • Asli Lal Kitab • Tajika Varshaphal")}</div>
@@ -399,9 +402,9 @@ def build_full_56_page_html(data: dict, lang: str = "mr", package: str = "maha",
           </div>
 
           <!-- Divine Landscape Ganesha Artwork (Fills lower empty space) -->
-          <div class="cover-ganesha-landscape" style="margin: 12px 0 8px 0; text-align: center; width: 100%;">
-            <img src="{ganesha_landscape_emblem}" style="width: 100%; max-height: 195px; object-fit: cover; border-radius: 12px; border: 2.5px solid #D4AF37; box-shadow: 0 6px 24px rgba(124,45,18,0.35); display: block;" alt="॥ श्री विघ्नहर्ता गणेश ॥"/>
-            <div style="font-size: 11px; font-weight: 800; color: #991B1B; letter-spacing: 1.5px; margin-top: 6px; text-align: center;">
+          <div class="cover-ganesha-landscape" style="margin: 8px 0 4px 0; text-align: center; width: 100%;">
+            <img src="{ganesha_landscape_emblem}" style="width: 100%; max-height: 165px; object-fit: cover; border-radius: 10px; border: 2px solid #D4AF37; box-shadow: 0 4px 16px rgba(124,45,18,0.25); display: block;" alt="॥ श्री विघ्नहर्ता गणेश ॥"/>
+            <div style="font-size: 10.5px; font-weight: 800; color: #991B1B; letter-spacing: 1.2px; margin-top: 4px; text-align: center;">
               ॥ वक्रतुण्ड महाकाय सूर्यकोटि समप्रभ । निर्विघ्नं कुरु मे देव सर्वकार्येषु सर्वदा ॥
             </div>
           </div>
@@ -418,7 +421,7 @@ def build_full_56_page_html(data: dict, lang: str = "mr", package: str = "maha",
     # =========================================================================
     # PAGE 2: TABLE OF CONTENTS / INDEX (अनुक्रमणिका व संपूर्ण विषय सूची)
     # =========================================================================
-    toc_img = brand.get("logo_data") or get_image_base64("opt_shivansh_logo.jpg")
+    toc_img = brand.get("logo_data") or VASTUSAUKHYAM_LOGO_BASE64 or SHIVANSH_LOGO_BASE64 or get_image_base64("vastusaukhyam_logo.jpg")
     img_tag = f'<img src="{toc_img}" style="width:75px; height:auto; margin-bottom:4px; border-radius:50%; box-shadow:0 3px 10px rgba(124,45,18,0.25); border:2px solid #D4AF37;">' if toc_img else ''
 
     p_toc_inner = f"""
@@ -2262,43 +2265,14 @@ def build_full_56_page_html(data: dict, lang: str = "mr", package: str = "maha",
       --pdf-page-border: {border_page};
       --pdf-cover-bg: {cover_bg};
     }}
-    body {{
-      background: var(--pdf-body-bg) !important;
-    }}
-    .kundli-page {{
-      background: var(--pdf-page-bg) !important;
-      border: var(--pdf-page-border) !important;
-    }}
-    .cover-page {{
-      background: var(--pdf-cover-bg) !important;
-    }}
-    @media print {{
-      body {{ background: #FFFFFF !important; }}
-      .kundli-page {{
-        margin: 0 auto;
-        box-shadow: none;
-        border-radius: 0;
-        border: var(--pdf-page-border) !important;
-        background: var(--pdf-page-bg) !important;
-        height: 284mm;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-      }}
-      .cover-page {{
-        background: var(--pdf-cover-bg) !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-      }}
-      .no-print {{ display: none !important; }}
-    }}
     """
 
     css = theme_vars + """
     @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&family=Rasa:wght@500;600;700&display=swap');
 
     @page {
-      size: A4 portrait;
-      margin: 6mm;
+      size: 210mm 297mm;
+      margin: 0;
     }
     * { box-sizing: border-box; }
     body {
@@ -2307,31 +2281,119 @@ def build_full_56_page_html(data: dict, lang: str = "mr", package: str = "maha",
       color: #1F1B16;
       font-family: 'Plus Jakarta Sans', 'Noto Sans Devanagari', 'Rasa', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Mangal', 'Kokila', sans-serif;
       font-size: 10.6px;
-      line-height: 1.48;
+      line-height: 1.45;
       -webkit-font-smoothing: antialiased;
+      background: var(--pdf-body-bg) !important;
     }
     .kundli-page {
-      width: 198mm;
-      min-height: 284mm;
-      max-height: 284mm;
-      margin: 12px auto;
+      width: 210mm;
+      height: 297mm;
+      min-height: 297mm;
+      max-height: 297mm;
+      margin: 16px auto;
+      padding: 6mm 8mm;
+      box-sizing: border-box;
       background-size: cover !important;
       background-position: center !important;
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border-radius: 14px;
-      box-shadow: 
-        0 12px 34px -8px rgba(124, 45, 18, 0.12),
-        0 4px 16px -2px rgba(180, 83, 9, 0.08),
-        inset 0 0 0 1px rgba(255, 255, 255, 0.7);
+      background: var(--pdf-page-bg) !important;
+      border: var(--pdf-page-border) !important;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      padding: 12px 16px;
-      page-break-after: always;
-      break-after: page;
       overflow: hidden;
       position: relative;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    .kundli-page:not(:last-child) {
+      page-break-after: always;
+      break-after: page;
+    }
+    .cover-page {
+      background: var(--pdf-cover-bg) !important;
+    }
+    .page-header {
+      flex-shrink: 0 !important;
+    }
+    .page-body {
+      flex: 1 1 auto !important;
+      min-height: 0 !important;
+      overflow: hidden !important;
+    }
+    .page-footer {
+      flex-shrink: 0 !important;
+      margin-top: auto !important;
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+    }
+
+    @media print {
+      html, body {
+        width: 210mm !important;
+        height: 297mm !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #FFFFFF !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .kundli-page {
+        width: 210mm !important;
+        height: 297mm !important;
+        min-height: 297mm !important;
+        max-height: 297mm !important;
+        margin: 0 !important;
+        padding: 6mm 8mm !important;
+        box-sizing: border-box !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        overflow: hidden !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        background: var(--pdf-page-bg) !important;
+        border: var(--pdf-page-border) !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .kundli-page:last-child {
+        page-break-after: auto !important;
+        break-after: auto !important;
+      }
+      .cover-page {
+        width: 210mm !important;
+        height: 297mm !important;
+        min-height: 297mm !important;
+        max-height: 297mm !important;
+        margin: 0 !important;
+        padding: 6mm 8mm !important;
+        box-sizing: border-box !important;
+        background: var(--pdf-cover-bg) !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        overflow: hidden !important;
+      }
+      .page-header {
+        flex-shrink: 0 !important;
+      }
+      .page-body {
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+      }
+      .page-footer {
+        flex-shrink: 0 !important;
+        margin-top: auto !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      .no-print { display: none !important; }
     }
         @media screen and (max-width: 800px) {
       body {

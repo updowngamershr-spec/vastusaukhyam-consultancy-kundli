@@ -103,6 +103,21 @@ def run_app_fallback(app_url):
             time.sleep(2)
 
 
+def wait_for_server(port, timeout=30.0):
+    """Wait until the backend server is bound and accepting HTTP socket connections."""
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.settimeout(0.5)
+                if s.connect_ex(('127.0.0.1', port)) == 0:
+                    return True
+        except Exception:
+            pass
+        time.sleep(0.2)
+    return False
+
+
 def main():
     init_crm_db()
     port = find_open_port(8088)
@@ -111,7 +126,8 @@ def main():
     server_thread = threading.Thread(target=run_server, args=(port,), daemon=True)
     server_thread.start()
 
-    time.sleep(0.8)
+    # Actively wait until backend server is up and listening (prevents dark freeze / connection refuse)
+    server_ready = wait_for_server(port, timeout=30.0)
 
     app_url = f"http://127.0.0.1:{port}"
     ico_path = os.path.join(base_dir, "app_icon.ico")
@@ -123,25 +139,31 @@ def main():
     user_storage = os.path.join(get_user_data_root(), "webview_profile")
     os.makedirs(user_storage, exist_ok=True)
 
-    # Attempt native PyWebView window with full fail-safe fallback
-    try:
-        import webview
-        window = webview.create_window(
-            title="Shivansh Astro-Vastu Professional (शिवांश ॲस्ट्रो-वास्तू)",
-            url=app_url,
-            width=1440,
-            height=920,
-            min_size=(1024, 700),
-            background_color="#1A0F08",
-            text_select=False,
-        )
-        webview.start(
-            icon=ico_path,
-            storage_path=user_storage,
-            private_mode=False
-        )
-    except Exception as e:
-        # Fallback cleanly to Edge App mode — 100% reliable on every Windows PC!
+    # Check for direct Edge App mode preference
+    force_edge = os.environ.get("ASTRO_ENGINE", "").lower() in ("edge", "chrome", "browser")
+
+    if not force_edge and server_ready:
+        # Attempt native PyWebView window with full fail-safe fallback
+        try:
+            import webview
+            window = webview.create_window(
+                title="वास्तुसौख्यम् कन्सलटन्सी (Vastusaukhyam Consultancy)",
+                url=app_url,
+                width=1440,
+                height=920,
+                min_size=(1024, 700),
+                background_color="#FFFDF9",
+                text_select=False,
+            )
+            webview.start(
+                icon=ico_path,
+                storage_path=user_storage,
+                private_mode=False
+            )
+        except Exception as e:
+            # Fallback cleanly to Edge App mode — 100% reliable on every Windows PC!
+            run_app_fallback(app_url)
+    else:
         run_app_fallback(app_url)
 
     sys.exit(0)
