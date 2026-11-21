@@ -8,13 +8,30 @@ Integrated with:
 """
 
 import os
+import re
 import sqlite3
 
-# Fast-access benchmark cities
+# Fast-access benchmark cities (prioritizing Maharashtra & key regional centers)
 OFFLINE_CITIES = [
-    {"name": "Ludhiana", "country": "India", "state": "Punjab", "lat": 30.9010, "lon": 75.8573, "tz": 5.5},
+    {"name": "Karmala", "country": "India", "state": "Maharashtra", "lat": 18.4116, "lon": 75.1966, "tz": 5.5, "district": "Solapur"},
+    {"name": "Solapur", "country": "India", "state": "Maharashtra", "lat": 17.6599, "lon": 75.9064, "tz": 5.5},
+    {"name": "Karmala, Solapur", "country": "India", "state": "Maharashtra", "lat": 18.4116, "lon": 75.1966, "tz": 5.5},
+    {"name": "Pandharpur", "country": "India", "state": "Maharashtra", "lat": 17.6776, "lon": 75.3284, "tz": 5.5},
+    {"name": "Pune", "country": "India", "state": "Maharashtra", "lat": 18.5204, "lon": 73.8567, "tz": 5.5},
+    {"name": "Mumbai", "country": "India", "state": "Maharashtra", "lat": 19.0760, "lon": 72.8777, "tz": 5.5},
+    {"name": "Nashik", "country": "India", "state": "Maharashtra", "lat": 19.9975, "lon": 73.7898, "tz": 5.5},
+    {"name": "Kolhapur", "country": "India", "state": "Maharashtra", "lat": 16.7050, "lon": 74.2433, "tz": 5.5},
+    {"name": "Satara", "country": "India", "state": "Maharashtra", "lat": 17.6805, "lon": 74.0183, "tz": 5.5},
+    {"name": "Sangli", "country": "India", "state": "Maharashtra", "lat": 16.8524, "lon": 74.5815, "tz": 5.5},
+    {"name": "Chhatrapati Sambhajinagar", "country": "India", "state": "Maharashtra", "lat": 19.8762, "lon": 75.3433, "tz": 5.5},
+    {"name": "Ahmednagar", "country": "India", "state": "Maharashtra", "lat": 19.0948, "lon": 74.7480, "tz": 5.5},
+    {"name": "Nagpur", "country": "India", "state": "Maharashtra", "lat": 21.1458, "lon": 79.0882, "tz": 5.5},
+    {"name": "Thane", "country": "India", "state": "Maharashtra", "lat": 19.2183, "lon": 72.9781, "tz": 5.5},
+    {"name": "Vadodara", "country": "India", "state": "Gujarat", "lat": 22.3072, "lon": 73.1812, "tz": 5.5},
+    {"name": "Ahmedabad", "country": "India", "state": "Gujarat", "lat": 23.0225, "lon": 72.5714, "tz": 5.5},
     {"name": "Delhi", "country": "India", "state": "Delhi", "lat": 28.6139, "lon": 77.2090, "tz": 5.5},
     {"name": "New Delhi", "country": "India", "state": "Delhi", "lat": 28.6139, "lon": 77.2090, "tz": 5.5},
+    {"name": "Ludhiana", "country": "India", "state": "Punjab", "lat": 30.9010, "lon": 75.8573, "tz": 5.5},
     {"name": "Noida", "country": "India", "state": "Uttar Pradesh", "lat": 28.5355, "lon": 77.3910, "tz": 5.5},
     {"name": "Gurugram", "country": "India", "state": "Haryana", "lat": 28.4595, "lon": 77.0266, "tz": 5.5},
     {"name": "Chandigarh", "country": "India", "state": "Chandigarh", "lat": 30.7333, "lon": 76.7794, "tz": 5.5},
@@ -96,18 +113,30 @@ def search_cities(query: str, limit: int = 30) -> list[dict]:
     """
     Search across 721,000+ cities and statutory towns in India & Worldwide.
     Always prioritizes prominent Indian cities and matches accurately.
+    Supports compound queries like 'Karmala, Solapur' or 'Solapur, Maharashtra'.
     """
     if not query or len(query.strip()) < 2:
         return OFFLINE_CITIES[:limit]
 
-    q = query.strip().lower()
-    
+    q_raw = query.strip().lower()
+    # Split query by comma, slash or whitespace
+    tokens = [t.strip() for t in re.split(r'[,/\s]+', q_raw) if t.strip()]
+    if not tokens:
+        tokens = [q_raw]
+
     # Check priority in-memory list first
     priority_matches = []
+    # Pass 1: exact/prefix match for all tokens or full query
     for c in OFFLINE_CITIES:
         c_name = c["name"].lower()
-        if c_name.startswith(q) or q in c_name:
+        c_state = c.get("state", "").lower()
+        c_dist = c.get("district", "").lower()
+        full_text = f"{c_name} {c_state} {c_dist}"
+        if all(t in full_text for t in tokens):
             priority_matches.append(c)
+        elif any(c_name.startswith(t) or t in c_name for t in tokens):
+            if c not in priority_matches:
+                priority_matches.append(c)
 
     db_path = _get_db_path()
     if not os.path.exists(db_path):
@@ -117,33 +146,35 @@ def search_cities(query: str, limit: int = 30) -> list[dict]:
         conn = sqlite3.connect(db_path)
         cur = conn.cursor()
         
-        # 1. Exact or prefix match
+        main_token = tokens[0]
+        # 1. Exact or prefix match with Maharashtra & Indian priority
         cur.execute("""
             SELECT name, country, state, lat, lng, timezone_offset
             FROM cities
-            WHERE name LIKE ?
+            WHERE name LIKE ? OR name LIKE ?
             ORDER BY
+                CASE WHEN LOWER(state) = 'maharashtra' THEN 0 ELSE 1 END,
                 CASE WHEN country = 'IN' THEN 0 ELSE 1 END,
                 CASE WHEN LOWER(name) = ? THEN 0 ELSE 1 END,
                 LENGTH(name) ASC
             LIMIT ?
-        """, (f"{q}%", q, limit))
+        """, (f"{main_token}%", f"%{main_token}%", main_token, limit * 2))
         rows = cur.fetchall()
 
-        # 2. If few results, try substring match
-        if len(rows) < 5 and len(q) >= 3:
-            cur.execute("""
-                SELECT name, country, state, lat, lng, timezone_offset
-                FROM cities
-                WHERE name LIKE ? AND country = 'IN'
-                ORDER BY LENGTH(name) ASC
-                LIMIT ?
-            """, (f"%{q}%", limit))
-            extra = cur.fetchall()
-            existing_names = {r[0].lower() for r in rows}
-            for er in extra:
-                if er[0].lower() not in existing_names:
-                    rows.append(er)
+        # 2. If compound tokens (e.g. ['karmala', 'solapur']), filter or reorder by second token
+        if len(tokens) > 1:
+            sec_token = tokens[1]
+            scored_rows = []
+            for r in rows:
+                r_text = f"{r[0]} {r[1]} {r[2]}".lower()
+                score = 0
+                if sec_token in r_text:
+                    score += 10
+                if (r[2] or '').lower() == 'maharashtra':
+                    score += 5
+                scored_rows.append((score, r))
+            scored_rows.sort(key=lambda x: -x[0])
+            rows = [r for _, r in scored_rows]
 
         conn.close()
 

@@ -141,9 +141,21 @@ def init_crm_db():
             logo_data TEXT DEFAULT '',
             pdf_background TEXT DEFAULT 'parchment',
             custom_bg_data TEXT DEFAULT '',
+            cover_banner_type TEXT DEFAULT 'official',
+            custom_banner_data TEXT DEFAULT '',
             updated_at TEXT NOT NULL
         )
     """)
+    for col, col_def in [
+        ("pdf_background", "TEXT DEFAULT 'parchment'"),
+        ("custom_bg_data", "TEXT DEFAULT ''"),
+        ("cover_banner_type", "TEXT DEFAULT 'official'"),
+        ("custom_banner_data", "TEXT DEFAULT ''"),
+    ]:
+        try:
+            cur.execute(f"ALTER TABLE branding ADD COLUMN {col} {col_def};")
+        except Exception:
+            pass
     # 1. Seed Sample VIP Client (Rajesh Joshi, Pune) if clients table is empty
     cur.execute("SELECT COUNT(*) FROM clients")
     if cur.fetchone()[0] == 0:
@@ -216,6 +228,10 @@ def get_branding():
             d["kendra_name"] = "वास्तुसौख्यम् कन्सलटन्सी"
         if not d.get("phone") or d.get("phone") == "9373058052":
             d["phone"] = "9657196366"
+        if not d.get("cover_banner_type"):
+            d["cover_banner_type"] = "official"
+        if not d.get("custom_banner_data"):
+            d["custom_banner_data"] = ""
         if not d.get("logo_data"):
             try:
                 from engine._logo_b64 import VASTUSAUKHYAM_LOGO_BASE64
@@ -231,7 +247,10 @@ def get_branding():
         "address": "Maharashtra, India",
         "tagline": "Ancient Vedic, KP & Lal Kitab Predictions",
         "logo_data": "",
-        "pdf_background": "parchment"
+        "pdf_background": "parchment",
+        "custom_bg_data": "",
+        "cover_banner_type": "official",
+        "custom_banner_data": ""
     }
 
 
@@ -241,8 +260,8 @@ def save_branding(data: dict):
     cur = conn.cursor()
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     cur.execute("""
-        INSERT INTO branding (id, astrologer_name, kendra_name, phone, email, address, tagline, logo_data, pdf_background, custom_bg_data, updated_at)
-        VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO branding (id, astrologer_name, kendra_name, phone, email, address, tagline, logo_data, pdf_background, custom_bg_data, cover_banner_type, custom_banner_data, updated_at)
+        VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET
             astrologer_name=excluded.astrologer_name,
             kendra_name=excluded.kendra_name,
@@ -253,6 +272,8 @@ def save_branding(data: dict):
             logo_data=excluded.logo_data,
             pdf_background=excluded.pdf_background,
             custom_bg_data=excluded.custom_bg_data,
+            cover_banner_type=excluded.cover_banner_type,
+            custom_banner_data=excluded.custom_banner_data,
             updated_at=excluded.updated_at
     """, (
         data.get("astrologer_name", "Vedic Astrologer"),
@@ -264,6 +285,8 @@ def save_branding(data: dict):
         data.get("logo_data", ""),
         data.get("pdf_background", "parchment"),
         data.get("custom_bg_data", ""),
+        data.get("cover_banner_type", "official"),
+        data.get("custom_banner_data", ""),
         now_str
     ))
     conn.commit()

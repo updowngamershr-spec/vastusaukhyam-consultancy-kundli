@@ -46,8 +46,15 @@ try:
 except Exception:
     GANESHA_LANDSCAPE_BASE64 = ""
 
+try:
+    from engine._banner_b64 import VASTUSAUKHYAM_BANNER_BASE64
+except Exception:
+    VASTUSAUKHYAM_BANNER_BASE64 = ""
+
 def get_image_base64(fname: str) -> str:
     """Return data URI for an optimized asset image."""
+    if ("banner" in fname.lower() or "vastu" in fname.lower()) and VASTUSAUKHYAM_BANNER_BASE64:
+        return VASTUSAUKHYAM_BANNER_BASE64
     if "landscape" in fname.lower() and GANESHA_LANDSCAPE_BASE64:
         return GANESHA_LANDSCAPE_BASE64
     if "ganesh" in fname.lower() and GANESHA_BASE64:
@@ -77,7 +84,7 @@ def get_image_base64(fname: str) -> str:
     return ""
 
 def _page_wrapper(page_num: int, meta: dict, brand: dict, title_en: str, title_hi: str, inner_html: str, lang: str = "en") -> str:
-    """Wrap content in a standard A4 Shivansh Astro-Vastu bordered page with header & footer."""
+    """Wrap content in a standard A4 Vastusaukhyam Consultancy bordered page with header & footer."""
     if lang in ("mr", "marathi"):
         title_str = to_marathi(title_hi) if title_hi else to_marathi(title_en)
         header_right = f"{brand.get('kendra_name') or 'वास्तुसौख्यम् कन्सलटन्सी'} — बृहत् कुंडली"
@@ -354,6 +361,18 @@ def build_full_56_page_html(data: dict, lang: str = "mr", package: str = "maha",
     ganesha_emblem = GANESHA_BASE64 or get_image_base64("ganesha_circular.png") or get_image_base64("ganesha.png")
     ganesha_landscape_emblem = GANESHA_LANDSCAPE_BASE64 or get_image_base64("ganesha_landscape.jpg")
     cover_logo = brand.get("logo_data") or VASTUSAUKHYAM_LOGO_BASE64 or SHIVANSH_LOGO_BASE64 or get_image_base64("vastusaukhyam_logo.jpg")
+
+    cover_banner_choice = (brand.get("cover_banner_type") or "official").lower().strip()
+    custom_banner = brand.get("custom_banner_data") or ""
+    if cover_banner_choice == "custom" and custom_banner and custom_banner.startswith("data:image"):
+        cover_artwork_src = custom_banner
+        cover_artwork_shloka = ""
+    elif cover_banner_choice == "ganesha":
+        cover_artwork_src = ganesha_landscape_emblem or GANESHA_LANDSCAPE_BASE64 or get_image_base64("ganesha_landscape.jpg")
+        cover_artwork_shloka = "॥ वक्रतुण्ड महाकाय सूर्यकोटि समप्रभ । निर्विघ्नं कुरु मे देव सर्वकार्येषु सर्वदा ॥"
+    else:  # 'official' (Image 5 Dr. Maheshkumar Sumant Kulkarni Wide Banner)
+        cover_artwork_src = VASTUSAUKHYAM_BANNER_BASE64 or get_image_base64("vastusaukhyam_cover_banner.jpg") or get_image_base64("vastusaukhyam_banner.jpg") or ganesha_landscape_emblem
+        cover_artwork_shloka = ""
     p1_html = f"""
     <div class="kundli-page cover-page">
       <div class="cover-border-outer">
@@ -401,12 +420,10 @@ def build_full_56_page_html(data: dict, lang: str = "mr", package: str = "maha",
             </table>
           </div>
 
-          <!-- Divine Landscape Ganesha Artwork (Fills lower empty space) -->
+          <!-- Cover Page Artwork / Wide Banner (Dr. Maheshkumar Sumant Kulkarni / Ganesha / Custom) -->
           <div class="cover-ganesha-landscape" style="margin: 8px 0 4px 0; text-align: center; width: 100%;">
-            <img src="{ganesha_landscape_emblem}" style="width: 100%; max-height: 165px; object-fit: cover; border-radius: 10px; border: 2px solid #D4AF37; box-shadow: 0 4px 16px rgba(124,45,18,0.25); display: block;" alt="॥ श्री विघ्नहर्ता गणेश ॥"/>
-            <div style="font-size: 10.5px; font-weight: 800; color: #991B1B; letter-spacing: 1.2px; margin-top: 4px; text-align: center;">
-              ॥ वक्रतुण्ड महाकाय सूर्यकोटि समप्रभ । निर्विघ्नं कुरु मे देव सर्वकार्येषु सर्वदा ॥
-            </div>
+            <img src="{cover_artwork_src}" style="width: 100%; max-height: 165px; object-fit: contain; border-radius: 8px; border: 1.5px solid #D4AF37; box-shadow: 0 4px 16px rgba(124,45,18,0.22); display: block;" alt="Vastusaukhyam Cover Banner"/>
+            {f'<div style="font-size: 10.5px; font-weight: 800; color: #991B1B; letter-spacing: 1.2px; margin-top: 4px; text-align: center;">{cover_artwork_shloka}</div>' if cover_artwork_shloka else ''}
           </div>
 
           <div class="cover-footer-stamp">
@@ -529,7 +546,7 @@ def build_full_56_page_html(data: dict, lang: str = "mr", package: str = "maha",
     </div>
 
     <div style="margin-top:6px; padding:5px 10px; background:linear-gradient(90deg, #FFFBEB 0%, #FEF3C7 100%); border:1px solid #D4AF37; border-radius:5px; display:flex; justify-content:space-between; align-items:center; font-size:9px; color:#78350F; font-weight:700;">
-      <span>🔱 {brand.get("kendra_name", "शिवांश ॲस्ट्रो-वास्तू")} • {brand.get("astrologer_name") or "Mayur Mandhare (BE.E&TC)"} &nbsp;&bull;&nbsp; 📞 {brand.get("phone") or "9373058052"}</span>
+      <span>🔱 {brand.get("kendra_name") or "वास्तुसौख्यम् कन्सलटन्सी"} • {brand.get("astrologer_name") or "Dr. Maheshkumar Sumant Kulkarni"} &nbsp;&bull;&nbsp; 📞 {brand.get("phone") or "9657196366"}</span>
       <span>{meta["name"]} — {meta["place"]} ({meta["dob_str"]})</span>
     </div>
     """
@@ -837,7 +854,7 @@ def build_full_56_page_html(data: dict, lang: str = "mr", package: str = "maha",
                 for y in yogas
             )
             extra_p9 = f"""
-            <div class="box-heading mt-14">{T("Auspicious Yogas & Raja Yogas in Your Kundli (Shivansh Special)", "कुंडली में निर्मित प्रमुख राजयोग एवं विशेष योग")}</div>
+            <div class="box-heading mt-14">{T(f"Auspicious Yogas & Raja Yogas in Your Kundli ({brand.get('kendra_name') or 'Vastusaukhyam'} Special)", f"कुंडलीमध्ये निर्मित प्रमुख राजयोग व विशेष योग ({brand.get('kendra_name') or 'वास्तुसौख्यम्'} विशेष)")}</div>
             {yoga_cards}
             """
         pages.append(_page_wrapper(p_num, meta, brand, "Life Predictions", "जीवन फलादेश", f"<div class='prose-block'>{blocks_html}{extra_p9}</div>", lang))
@@ -953,7 +970,7 @@ def build_full_56_page_html(data: dict, lang: str = "mr", package: str = "maha",
       )}</p>
 
       <div class="note-box">
-        <strong>{T("Shivansh Astro-Vastu Note:", "शिवांश ॲस्ट्रो-वास्तू शास्त्रीय टीप:")}</strong>
+        <strong>{T(f"{brand.get('kendra_name') or 'Vastusaukhyam'} Note:", f"{brand.get('kendra_name') or 'वास्तुसौख्यम् कन्सलटन्सी'} शास्त्रीय टीप:")}</strong>
         {P(
           "Sade Sati is not universally malefic; its actual effect depends on the ongoing Vimshottari Dasha, Ashtakavarga bindus in Saturn's transit sign, and Saturn's functional nature for your Ascendant.",
           "साढ़े साती सदैव अशुभ नहीं होती; इसका वास्तविक प्रभाव वर्तमान महादशा, अष्टकवर्ग के शुभ बिंदुओं और लग्न के अनुसार शनि के स्वामित्व पर निर्भर करता है।"
@@ -1394,7 +1411,7 @@ def build_full_56_page_html(data: dict, lang: str = "mr", package: str = "maha",
                 for g in gems
             )
             extra_p43 = f"""
-            <div class="box-heading mt-10">{T("Shivansh Astro-Vastu Vedic Ratna, Rudraksha & Beej Mantra Prescription", "शिवांश ॲस्ट्रो-वास्तू वैदिक रत्न, रुद्राक्ष व बीज मंत्र सल्ला")}</div>
+            <div class="box-heading mt-10">{T(f"{brand.get('kendra_name') or 'Vastusaukhyam'} Vedic Ratna, Rudraksha & Beej Mantra Prescription", f"{brand.get('kendra_name') or 'वास्तुसौख्यम् कन्सलटन्सी'} वैदिक रत्न, रुद्राक्ष व बीज मंत्र सल्ला")}</div>
             <table class="data-table ultra-compact">
               <thead><tr><th>Trikona Role</th><th>Planet</th><th>Recommended Gemstone</th><th>Metal &amp; Finger</th><th>Rudraksha</th><th>Vedic Beej Mantra</th></tr></thead>
               <tbody>{gem_rows}</tbody>
@@ -1915,8 +1932,8 @@ def build_full_56_page_html(data: dict, lang: str = "mr", package: str = "maha",
           </p>
           <p style="margin:0; font-size:10.2px;">
             {T(
-              "Shivansh Astro-Vastu computes planetary positions using high-precision astronomical algorithms (Swiss Ephemeris / Lahiri Chitrapaksha Ayanamsa) down to fractions of an arc-second. This eliminates all manual calculation defects, guaranteeing 100% authentic, tamper-proof ephemeris charts.",
-              "शिवांश ॲस्ट्रो-वास्तू (Shivansh Astro-Vastu) आधुनिक खगोलीय गणित व प्रामाणिक लाहिड़ी अयनांश के आधार पर सेकंड के सूक्ष्म भाग तक ग्रह स्थितियों की गणना करता है, जिससे मानवीय गणना की सभी त्रुटियां समाप्त हो जाती हैं और शत-प्रतिशत प्रामाणिक चक्र निर्मित होते हैं।"
+              f"{brand.get('kendra_name') or 'Vastusaukhyam Consultancy'} computes planetary positions using high-precision astronomical algorithms (Swiss Ephemeris / Lahiri Chitrapaksha Ayanamsa) down to fractions of an arc-second. This eliminates all manual calculation defects, guaranteeing 100% authentic, tamper-proof ephemeris charts.",
+              f"{brand.get('kendra_name') or 'वास्तुसौख्यम् कन्सलटन्सी'} आधुनिक खगोलीय गणित व प्रामाणिक लाहिड़ी अयनांश के आधार पर सेकंड के सूक्ष्म भाग तक ग्रह स्थितियों की गणना करता है, जिससे मानवीय गणना की सभी त्रुटियां समाप्त हो जाती हैं और शत-प्रतिशत प्रामाणिक चक्र निर्मित होते हैं।"
             )}
           </p>
         </div>
@@ -1998,7 +2015,7 @@ def build_full_56_page_html(data: dict, lang: str = "mr", package: str = "maha",
     p56_inner = f"""
     <div class="prose-block">
       <div class="highlight-banner" style="font-size:12.5px; border-left:4px solid #B45309;">
-        <strong>{T("Special Shivansh Master Guide: Understand Your Life & Kundli In Simple Words", "विशेष गुरुकुलम् मार्गदर्शिका: अपनी कुंडली को आसान भाषा में समझें")}</strong><br/>
+        <strong>{T(f"Special {brand.get('kendra_name') or 'Vastusaukhyam'} Master Guide: Understand Your Life & Kundli In Simple Words", f"विशेष {brand.get('kendra_name') or 'वास्तुसौख्यम्'} मार्गदर्शिका: आपली कुंडली सोप्या शब्दांत समजून घ्या")}</strong><br/>
         <span style="font-size:10px; color:#78350F;">{T("A practical, easy-to-understand breakdown of major doshas, life roadmap, and real Lal Kitab wisdom for daily living.", "कुंडली में कौन-से मुख्य दोष हैं, जीवन का भविष्य कैसा रहेगा और लाल किताब अनुसार क्या करना चाहिए।")}</span>
       </div>
 
@@ -2067,8 +2084,8 @@ def build_full_56_page_html(data: dict, lang: str = "mr", package: str = "maha",
     <div class="prose-block">
       <div class="intro-highlight" style="font-size:11px; margin-bottom:10px;">
         {T(
-          "Shivansh Astro-Vastu presents the sacred behavioral and karmic roadmap derived from Maharishi Parashara and Lal Kitab Farman. Practicing noble karma mitigates malefic planetary vibrations, while violating karmic codes severely triggers Rahu, Ketu, and Saturn doshas.",
-          "शिवांश ॲस्ट्रो-वास्तू (Shivansh Astro-Vastu) द्वारा प्रस्तुत महर्षि पराशर एवं लाल किताब पर आधारित आचरण संहिता। सात्विक कर्म एवं अनुशासित आचरण से अशुभ ग्रहों का दुष्प्रभाव शांत होता है, जबकि वर्जित कार्यों से शनि, राहु एवं केतु के तीव्र दोष उत्पन्न होते हैं।"
+          f"{brand.get('kendra_name') or 'Vastusaukhyam Consultancy'} presents the sacred behavioral and karmic roadmap derived from Maharishi Parashara and Lal Kitab Farman. Practicing noble karma mitigates malefic planetary vibrations, while violating karmic codes severely triggers Rahu, Ketu, and Saturn doshas.",
+          f"{brand.get('kendra_name') or 'वास्तुसौख्यम् कन्सलटन्सी'} प्रस्तुत महर्षि पराशर व लाल किताब आधारित आचरण संहिता। सात्विक कर्म व अनुशासित आचरणाने अशुभ ग्रहांचे दोष शांत होतात, तर वर्जित कर्मांमुळे शनी, राहू व केतूचे तीव्र दोष निर्माण होतात."
         )}
       </div>
 
@@ -2103,7 +2120,7 @@ def build_full_56_page_html(data: dict, lang: str = "mr", package: str = "maha",
       </div>
 
       <div class="highlight-banner" style="margin-top:12px; font-size:11.2px; line-height:1.55;">
-        <strong>{T("Shivansh Astro-Vastu Principle:", "शिवांश ॲस्ट्रो-वास्तू कर्म सिद्धांत:")}</strong>
+        <strong>{T(f"{brand.get('kendra_name') or 'Vastusaukhyam'} Principle:", f"{brand.get('kendra_name') or 'वास्तुसौख्यम् कन्सलटन्सी'} कर्म सिद्धांत:")}</strong>
         {T(
           '"Yadrisham Kriyate Karma Tadrisham Bhujyate Phalam" — Planetary transits only deliver the harvest of your seeds. When noble conduct, righteous livelihood, and charity are practiced, even debilitated planets convert into protective shields.', 
           '"यादृशं क्रियते कर्म तादृशं भुज्यते फलम्" — ग्रह केवल आपके द्वारा बोए गए बीजों का फल प्रदान करते हैं। जब आचरण सात्विक, आजीविका धर्मसम्मत और सेवा निःस्वार्थ होती है, तो नीच ग्रह भी जीवन रक्षक कवच बन जाते हैं।', 
@@ -2173,8 +2190,8 @@ def build_full_56_page_html(data: dict, lang: str = "mr", package: str = "maha",
         </h4>
         <p style="margin:0 0 4px 0;">
           {T(
-            "Under no circumstances shall Shivansh Astro-Vastu, its computational algorithm creators, developers, publishers, consulting astrologers, authors, or corporate distributors be blamed, held liable, or legally answerable for any direct, indirect, consequential, punitive, or financial losses, mental distress, domestic disputes, business failures, or personal consequences arising out of the interpretation, belief, or application of this document. Possession or reading of this report constitutes an absolute, irrevocable agreement to hold Shivansh Astro-Vastu completely harmless from all legal actions, police complaints, civil claims, or consumer litigations worldwide.",
-            "किसी भी परिस्थिति में 'शिवांश ॲस्ट्रो-वास्तू (Shivansh Astro-Vastu)' (Shivansh Astro-Vastu), इसके सॉफ्टवेयर डेवलपर, प्रकाशक, परामर्शदाता ज्योतिषी अथवा संबंधित संस्थाओं को इस प्रतिवेदन में उल्लिखित किसी भी गणना, फलादेश अथवा उपाय के कारण उत्पन्न किसी भी आर्थिक हानि, मानसिक तनाव, पारिवारिक विवाद, व्यापारिक घाटे अथवा निर्णय के लिए उत्तरदायी या जिम्मेदार (Blame) नहीं ठहराया जा सकेगा। इस दस्तावेज को प्राप्त करना इस बात की बिना शर्त कानूनी सहमति है कि इसके आधार पर किसी भी न्यायालय, उपभोक्ता मंच या पुलिस प्राधिकरण में कोई दावा अथवा अभियोग स्वीकार्य नहीं होगा।"
+            f"Under no circumstances shall {brand.get('kendra_name') or 'Vastusaukhyam Consultancy'}, its computational algorithm creators, developers, publishers, consulting astrologers, authors, or corporate distributors be blamed, held liable, or legally answerable for any direct, indirect, consequential, punitive, or financial losses, mental distress, domestic disputes, business failures, or personal consequences arising out of the interpretation, belief, or application of this document. Possession or reading of this report constitutes an absolute, irrevocable agreement to hold {brand.get('kendra_name') or 'Vastusaukhyam Consultancy'} completely harmless from all legal actions, police complaints, civil claims, or consumer litigations worldwide.",
+            f"कोणत्याही परिस्थितीत '{brand.get('kendra_name') or 'वास्तुसौख्यम् कन्सलटन्सी'}', याचे सॉफ्टवेअर डेव्हलपर्स, प्रकाशक अथवा सल्लागार ज्योतिषी यांना या अहवालातील कोणत्याही गणना, फलादेश अथवा उपायांमुळे उद्भवणाऱ्या कोणत्याही आर्थिक, मानसिक किंवा कौटुंबिक बाबींसाठी जबाबदार धरता येणार नाही. हा अहवाल प्राप्त करणे ही या कायदेशीर अटींची पूर्ण संमती मानली जाईल."
           )}
         </p>
       </div>
@@ -2186,7 +2203,7 @@ def build_full_56_page_html(data: dict, lang: str = "mr", package: str = "maha",
         <p style="margin:0 0 4px 0;">
           {T(
             "This report is strictly for cultural, advisory, and spiritual guidance. It is NEVER a substitute for licensed medical diagnosis or surgery, psychiatric evaluation, qualified legal advocacy, or certified financial investment planning. Consult registered doctors for medical ailments and certified attorneys for legal issues. Furthermore, all Lal Kitab totkas, remedies, fasts, donations, and gemstones mentioned herein are traditional cultural practices; adopting any remedy is entirely at the recipient's voluntary risk, discretion, and faith.",
-            "यह प्रतिवेदन केवल आध्यात्मिक, सांस्कृतिक एवं परामर्श प्रयोजन हेतु है। यह किसी भी प्रकार से योग्य चिकित्सक, मनोरोग विशेषज्ञ, प्रमाणित अधिवक्ता अथवा पंजीकृत वित्तीय सलाहकार के पेशेवर परामर्श का विकल्प नहीं है। गंभीर स्वास्थ्य समस्याओं के लिए डॉक्टर तथा कानूनी विवादों के लिए वकील से संपर्क करना अनिवार्य है। इसके अतिरिक्त, इस प्रतिवेदन में दिए गए लाल किताब उपाय, दान, व्रत एवं रत्न पारंपरिक आस्था पर आधारित हैं; इनका पालन करना पूरी तरह से जातक के स्वैच्छिक विवेक, विश्वास एवं उत्तरदायित्व पर निर्भर है।"
+            "हा अहवाल केवळ आध्यात्मिक, सांस्कृतिक व मार्गदर्शनात्मक हेतूने तयार करण्यात आला आहे. हा कोणत्याही वैद्यकीय निदान, कायदेशीर सल्ला किंवा प्रमाणित वित्तीय नियोजनाचा पर्याय नाही. गंभीर आरोग्यासाठी तज्ज्ञ डॉक्टरांचा आणि कायदेशीर बाबींसाठी वकिलांचा सल्ला घ्यावा."
           )}
         </p>
       </div>
@@ -2197,8 +2214,8 @@ def build_full_56_page_html(data: dict, lang: str = "mr", package: str = "maha",
         </h4>
         <p style="margin:0 0 4px 0;">
           {T(
-            "© 2026 Shivansh Astro-Vastu. All Rights Reserved. The layout, astrological logic synthesis, report architecture, and algorithmic design of this publication are protected under the Indian Copyright Act 1957, International Berne Convention, and universal Intellectual Property Treaties. Unauthorized reproduction, digital copying, automated extraction, commercial syndication, reselling, or reverse engineering of this software or PDF report without prior written consent is strictly prohibited by law. Any dispute or arbitration shall be strictly and exclusively subject to the courts of local jurisdiction at the publisher's registered city.",
-            "© 2026 शिवांश ॲस्ट्रो-वास्तू (Shivansh Astro-Vastu) (Shivansh Astro-Vastu) — सर्वाधिकार सुरक्षित। इस प्रतिवेदन का प्रारूप, ज्योतिषीय एल्गोरिदम, संरचना एवं विश्लेषणात्मक प्रस्तुति भारतीय कॉपीराइट अधिनियम 1957 एवं अंतरराष्ट्रीय बौद्धिक संपदा संधियों के तहत सुरक्षित है। प्रकाशक की पूर्व लिखित अनुमति के बिना इस दस्तावेज अथवा इसके अंशों की प्रतिलिपि बनाना, पुनः प्रकाशन, डिजिटल पुनर्विक्रय अथवा व्यावसायिक उपयोग विधि विरुद्ध है। किसी भी कानूनी विवाद की स्थिति में न्यायिक क्षेत्राधिकार केवल प्रकाशक के पंजीकृत स्थानीय न्यायालय तक सीमित रहेगा।"
+            f"© 2026 {brand.get('kendra_name') or 'Vastusaukhyam Consultancy'}. All Rights Reserved. The layout, astrological logic synthesis, report architecture, and algorithmic design of this publication are protected under the Indian Copyright Act 1957, International Berne Convention, and universal Intellectual Property Treaties. Unauthorized reproduction, digital copying, automated extraction, commercial syndication, reselling, or reverse engineering of this software or PDF report without prior written consent is strictly prohibited by law. Any dispute or arbitration shall be strictly and exclusively subject to the courts of local jurisdiction at the publisher's registered city.",
+            f"© 2026 {brand.get('kendra_name') or 'वास्तुसौख्यम् कन्सलटन्सी'} — सर्व हक्क राखीव. या अहवालाची रचना, मांडणी व ज्योतिषीय अल्गोरिदम भारतीय कॉपीराइट कायदा १९५७ अंतर्गत संरक्षित आहेत. प्रकाशकाच्या पूर्वपरवानगीशिवाय या दस्तऐवजाची प्रत बनवणे किंवा पुनर्प्रकाशन करणे कायद्याने गुन्हा आहे."
           )}
         </p>
       </div>
@@ -2210,7 +2227,7 @@ def build_full_56_page_html(data: dict, lang: str = "mr", package: str = "maha",
         )}
       </div>
       <div style="text-align:center; margin-top:2px; font-size:9px; color:#64748B;">
-        Verified Authentic Astrological Document • Shivansh Astro-Vastu • 100% Offline Edition
+        Verified Authentic Astrological Document • {brand.get('kendra_name') or 'Vastusaukhyam Consultancy'} • 100% Offline Edition
       </div>
     </div>
     """
@@ -2853,7 +2870,7 @@ def build_full_56_page_html(data: dict, lang: str = "mr", package: str = "maha",
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes"/>
-  <title>Shivansh Astro-Vastu - {meta["name"]}</title>
+  <title>{brand.get('kendra_name') or 'वास्तुसौख्यम् कन्सलटन्सी'} - {meta["name"]}</title>
   <style>{css}</style>
 </head>
 <body>

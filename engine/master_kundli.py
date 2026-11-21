@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Shivansh Astro-Vastu Kundli CRM - Master Calculation Orchestrator
+Vastusaukhyam Consultancy Kundli CRM - Master Calculation Orchestrator
 Modularized Pipeline integrating Modules 1 through 16:
  1. Birth Data Validation (engine/birth_validation.py)
  2. Astronomical Calculations (engine/astronomy_calc.py)
@@ -88,7 +88,7 @@ def generate_complete_kundli(
     enforce_validation_lock: bool = False,
 ):
     """
-    Generate the complete Shivansh Astro-Vastu Kundli dataset for any person.
+    Generate the complete Vastusaukhyam Consultancy Kundli dataset for any person.
     Works 100% Offline. All parameters are verified deterministically.
     """
     city_info = find_city(place)

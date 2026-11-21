@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Shivansh Astro-Vastu - Authentic Vastu Shastra & Astro-Vastu Computational Engine
+Vastusaukhyam Consultancy - Authentic Vastu Shastra & Astro-Vastu Computational Engine
 1. 16 Mahavastu Directional Zones & 5 Elemental Balances (Pancha Tattva)
 2. 32 Pada Vastu Purusha Mandala & Door/Entrance Analysis
 3. Astrological Vastu Alignment (Lagna, 4th House/Lord & Planetary Directions)

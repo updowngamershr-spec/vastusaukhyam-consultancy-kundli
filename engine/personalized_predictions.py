@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Shivansh Astro-Vastu - Personalized Astrological Interpretation Engine
+Vastusaukhyam Consultancy - Personalized Astrological Interpretation Engine
 Generates 100% dynamic, chart-specific predictions for every native:
 1. Dynamic 10 Life Domains (Character, Career, Finance, Marriage, Health, Lifestyle, etc.)
    Calculated from actual Ascendant, Lagnesh, Moon, Nakshatra, and Bhava Lords.

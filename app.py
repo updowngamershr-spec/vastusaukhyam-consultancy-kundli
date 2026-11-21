@@ -106,6 +106,8 @@ class BrandingRequest(BaseModel):
     logo_data: str = ""
     pdf_background: str = "parchment"
     custom_bg_data: str = ""
+    cover_banner_type: str = "official"
+    custom_banner_data: str = ""
 
 
 class PrashnaRequest(BaseModel):
@@ -729,6 +731,10 @@ def api_generate_html(req: KundliRequest):
             data["brand"]["custom_bg_data"] = brand_cfg["custom_bg_data"]
         if brand_cfg.get("logo_data"):
             data["brand"]["logo_data"] = brand_cfg["logo_data"]
+        if brand_cfg.get("cover_banner_type"):
+            data["brand"]["cover_banner_type"] = brand_cfg["cover_banner_type"]
+        if brand_cfg.get("custom_banner_data"):
+            data["brand"]["custom_banner_data"] = brand_cfg["custom_banner_data"]
     active_pdf_bg = req.pdf_background or (brand_cfg.get("pdf_background") if brand_cfg else None) or "parchment"
     html_str = build_full_56_page_html(data, lang=req.lang, package=req.report_package, selected_pages=req.selected_pages, pdf_bg_theme=active_pdf_bg)
     return HTMLResponse(content=html_str)
@@ -805,12 +811,16 @@ def api_export_pdf(req: KundliRequest):
             data["brand"]["custom_bg_data"] = brand_cfg["custom_bg_data"]
         if brand_cfg.get("logo_data"):
             data["brand"]["logo_data"] = brand_cfg["logo_data"]
+        if brand_cfg.get("cover_banner_type"):
+            data["brand"]["cover_banner_type"] = brand_cfg["cover_banner_type"]
+        if brand_cfg.get("custom_banner_data"):
+            data["brand"]["custom_banner_data"] = brand_cfg["custom_banner_data"]
     active_pdf_bg = req.pdf_background or (brand_cfg.get("pdf_background") if brand_cfg else None) or "parchment"
     html_str = build_full_56_page_html(data, lang=req.lang, package=req.report_package, selected_pages=req.selected_pages, pdf_bg_theme=active_pdf_bg)
     safe_name = make_safe_filename(req.name)
     pkg_name = (req.report_package or "VIP").upper()
     ts_str = datetime.now().strftime("%Y%m%d_%H%M%S")
-    brand_kendra = data["brand"].get("kendra_name") or "Shivansh_Astro_Vastu"
+    brand_kendra = data["brand"].get("kendra_name") or "Vastusaukhyam_Consultancy"
     safe_brand = "".join(c if c.isalnum() or c in ("_", "-") else "_" for c in brand_kendra).strip("_")
     pdf_filename = f"{safe_name}_{pkg_name}_{ts_str}_{safe_brand}.pdf"
     pdf_path = os.path.join(REPORTS_DIR, pdf_filename)
@@ -3527,6 +3537,53 @@ def index_ui():
               </div>
             </div>
 
+            <!-- Cover Page Artwork / Wide Banner Settings -->
+            <div style="background:rgba(254, 243, 199, 0.45); border:1.5px solid #D4AF37; border-radius:10px; padding:16px 18px; margin-bottom:20px;">
+              <h4 style="margin:0 0 6px 0; color:#7C2D12; font-size:13.5px; display:flex; align-items:center; gap:8px;">
+                🖼️ मुखपृष्ठ बॅनर निवड (Cover Page Artwork Settings)
+              </h4>
+              <p style="font-size:11.5px; color:#574032; margin:0 0 12px 0; line-height:1.45;">
+                कुंडली अहवालाच्या पहिल्या पानावर (Page 1 Cover) खालीलपैकी कोणता बॅनर किंवा प्रतिमा दाखवायची ते निवडा:
+              </p>
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px;">
+                <label class="cover-banner-card" id="banner_card_official" style="cursor:pointer; display:flex; flex-direction:column; align-items:center; padding:12px 10px; border:2.5px solid #D97706; border-radius:8px; background:#FFFDF9; box-shadow:0 3px 10px rgba(217,119,6,0.15); text-align:center; transition:all 0.2s ease;">
+                  <input type="radio" name="cover_banner_radio" value="official" checked onchange="onCoverBannerRadioChanged(this.value)" style="margin-bottom:8px;"/>
+                  <span style="font-size:12px; font-weight:800; color:#78350F;">🏛️ अधिकृत वास्तुसौख्यम् बॅनर</span>
+                  <span style="font-size:9.5px; color:#92400E; margin-top:2px;">(Dr. Maheshkumar Sumant Kulkarni Wide Banner)</span>
+                </label>
+                <label class="cover-banner-card" id="banner_card_ganesha" style="cursor:pointer; display:flex; flex-direction:column; align-items:center; padding:12px 10px; border:1.5px solid #D1D5DB; border-radius:8px; background:#FFFFFF; box-shadow:0 2px 6px rgba(0,0,0,0.04); text-align:center; transition:all 0.2s ease;">
+                  <input type="radio" name="cover_banner_radio" value="ganesha" onchange="onCoverBannerRadioChanged(this.value)" style="margin-bottom:8px;"/>
+                  <span style="font-size:12px; font-weight:800; color:#1F2937;">🕉️ श्री गणेश लँडस्केप प्रतिमा</span>
+                  <span style="font-size:9.5px; color:#4B5563; margin-top:2px;">(Divine Sacred Landscape Ganesha Art)</span>
+                </label>
+              </div>
+
+              <!-- Custom Cover Banner Upload -->
+              <div id="banner_card_custom" style="margin-top:14px; padding:12px 14px; background:#FFFFFF; border:1.5px dashed #D97706; border-radius:8px; display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;">
+                <label style="cursor:pointer; display:flex; align-items:center; gap:8px;">
+                  <input type="radio" name="cover_banner_radio" value="custom" onchange="onCoverBannerRadioChanged(this.value)"/>
+                  <div>
+                    <div style="font-size:12px; font-weight:800; color:#78350F;">📁 स्वतःचा नवीन बॅनर अपलोड करा (Custom Uploaded Banner)</div>
+                    <div style="font-size:10px; color:#6B7280;">आपल्या संगणकावरून स्वतःची संस्था किंवा कार्यालयाचा बॅनर फोटो अपलोड करा</div>
+                  </div>
+                </label>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <input type="file" id="custom_banner_file" accept="image/*" onchange="previewAndEncodeCustomBanner(event)" style="display:none;"/>
+                  <button type="button" class="btn-primary-gradient" onclick="document.getElementById('custom_banner_file').click()" style="padding:6px 14px; font-size:11px;">
+                    📁 बॅनर निवडा (Upload Banner)
+                  </button>
+                  <button type="button" class="btn-table-action" onclick="removeCustomBanner()" style="padding:6px 12px; font-size:11px;">
+                    ✕ हटवा (Remove)
+                  </button>
+                </div>
+                <div id="custom_banner_thumb_wrap" style="display:none; align-items:center; gap:6px;">
+                  <img id="custom_banner_preview" src="" style="width:75px; height:28px; object-fit:cover; border-radius:4px; border:1px solid #D97706; box-shadow:0 1px 4px rgba(0,0,0,0.1);"/>
+                  <span style="font-size:10.5px; color:#059669; font-weight:700;">✓ बॅनर सेव्ह झाला</span>
+                </div>
+                <input type="hidden" id="custom_banner_data" value=""/>
+              </div>
+            </div>
+
             <div style="display:flex; justify-content:space-between; align-items:center;">
               <button class="btn-primary-gradient" onclick="saveBrandingSettings()">
                 💾 ब्रँडिंग व सेटिंग्ज सेव्ह करा (सेव करें)
@@ -5734,6 +5791,25 @@ def index_ui():
           if (typeof onBgThemeRadioChanged === 'function') {
             onBgThemeRadioChanged(currentBgTheme);
           }
+
+          // Cover Page Banner setup
+          const currentCoverBanner = b.cover_banner_type || 'official';
+          window._selectedCoverBannerType = currentCoverBanner;
+          if (b.custom_banner_data && b.custom_banner_data.startsWith('data:image')) {
+            const cBannerInput = document.getElementById('custom_banner_data');
+            const cBannerPrev = document.getElementById('custom_banner_preview');
+            const cBannerWrap = document.getElementById('custom_banner_thumb_wrap');
+            if (cBannerInput) cBannerInput.value = b.custom_banner_data;
+            if (cBannerPrev) cBannerPrev.src = b.custom_banner_data;
+            if (cBannerWrap) cBannerWrap.style.display = 'flex';
+          }
+          const bannerRadios = document.getElementsByName('cover_banner_radio');
+          for (const r of bannerRadios) {
+            r.checked = (r.value === currentCoverBanner);
+          }
+          if (typeof onCoverBannerRadioChanged === 'function') {
+            onCoverBannerRadioChanged(currentCoverBanner);
+          }
           const preview = document.getElementById('brand_logo_preview');
           const logoInput = document.getElementById('brand_logo_data');
           if (b.logo_data && b.logo_data.startsWith('data:image')) {
@@ -5851,6 +5927,75 @@ def index_ui():
       }
     }
 
+    function onCoverBannerRadioChanged(val) {
+      window._selectedCoverBannerType = val;
+      const cards = {
+        'official': document.getElementById('banner_card_official'),
+        'ganesha': document.getElementById('banner_card_ganesha'),
+        'custom': document.getElementById('banner_card_custom')
+      };
+      for (const [k, card] of Object.entries(cards)) {
+        if (!card) continue;
+        if (k === val) {
+          card.style.border = '2.5px solid #D97706';
+          card.style.boxShadow = '0 4px 14px rgba(217,119,6,0.25)';
+          card.style.transform = 'scale(1.02)';
+        } else {
+          card.style.border = '1.5px solid #D1D5DB';
+          card.style.boxShadow = '0 2px 6px rgba(0,0,0,0.04)';
+          card.style.transform = 'scale(1)';
+        }
+      }
+    }
+
+    function previewAndEncodeCustomBanner(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const dataUrl = e.target.result;
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          let w = img.width;
+          let h = img.height;
+          const maxW = 1200;
+          if (w > maxW) {
+            h = Math.round((h * maxW) / w);
+            w = maxW;
+          }
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          const optUrl = canvas.toDataURL('image/jpeg', 0.90);
+          document.getElementById('custom_banner_data').value = optUrl;
+          const prev = document.getElementById('custom_banner_preview');
+          const wrap = document.getElementById('custom_banner_thumb_wrap');
+          if (prev) prev.src = optUrl;
+          if (wrap) wrap.style.display = 'flex';
+          const radios = document.getElementsByName('cover_banner_radio');
+          for (const r of radios) {
+            if (r.value === 'custom') { r.checked = true; break; }
+          }
+          onCoverBannerRadioChanged('custom');
+        };
+        img.src = dataUrl;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function removeCustomBanner() {
+      document.getElementById('custom_banner_data').value = '';
+      const wrap = document.getElementById('custom_banner_thumb_wrap');
+      if (wrap) wrap.style.display = 'none';
+      const radios = document.getElementsByName('cover_banner_radio');
+      for (const r of radios) {
+        if (r.value === 'official') { r.checked = true; break; }
+      }
+      onCoverBannerRadioChanged('official');
+    }
+
     async function saveBrandingSettings() {
       let chosenTheme = window._selectedPdfBgTheme || 'parchment';
       const bgRadios = document.getElementsByName('pdf_bg_theme_radio');
@@ -5858,6 +6003,13 @@ def index_ui():
         if (r.checked) { chosenTheme = r.value; break; }
       }
       window._selectedPdfBgTheme = chosenTheme;
+
+      let chosenBanner = window._selectedCoverBannerType || 'official';
+      const bannerRadios = document.getElementsByName('cover_banner_radio');
+      for (const r of bannerRadios) {
+        if (r.checked) { chosenBanner = r.value; break; }
+      }
+      window._selectedCoverBannerType = chosenBanner;
 
       const payload = {
         astrologer_name: document.getElementById('brand_astro_name').value.trim() || 'Vedic Astrologer',
@@ -5868,7 +6020,9 @@ def index_ui():
         tagline: document.getElementById('brand_tagline').value.trim() || 'Ancient Vedic, KP & Lal Kitab Predictions',
         logo_data: document.getElementById('brand_logo_data').value.trim(),
         pdf_background: chosenTheme,
-        custom_bg_data: document.getElementById('custom_bg_data') ? document.getElementById('custom_bg_data').value : ''
+        custom_bg_data: document.getElementById('custom_bg_data') ? document.getElementById('custom_bg_data').value : '',
+        cover_banner_type: chosenBanner,
+        custom_banner_data: document.getElementById('custom_banner_data') ? document.getElementById('custom_banner_data').value : ''
       };
       const res = await fetch('/api/branding', {
         method: 'POST',

@@ -14,6 +14,7 @@ scratch/
 build/
 dist/
 Vastusaukhyam_Desktop_New_Build/
+reports/
 reports/*.pdf
 *.lnk
 ShivanshAstroVastu/
